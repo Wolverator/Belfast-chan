@@ -3,7 +3,6 @@ import codecs
 import configparser
 import os
 import random
-
 import discord
 import pandas
 
@@ -48,8 +47,15 @@ class BelfastGame(commands.Cog):
 
     @commands.command(pass_context=True, brief="Battle 2 girls in test mode")
     async def battle(self, ctx, girl1_id, girl2_id):
-
-        await ctx.send("```"+self.battle2girls(ctx.author.id, girl1_id, girl2_id)+"```")
+        if get_profile(ctx.author.id):
+            if get_harem_size(ctx.author.id) and get_harem_size(ctx.author.id) > 0:
+                await ctx.send("```"+self.battle2girls(ctx.author.id, girl1_id, girl2_id)+"```")
+            else:
+                await ctx.send("I am sorry, " + self.user(
+                    ctx.author.id) + "!\nBut you have no girls to battle with yet! Build some with ``Bel build``")
+        else:
+            await ctx.send("I am sorry, " + self.user(
+                ctx.author.id) + "!\nBut you have no profile yet. Create one with ``Bel new``")
 
     def battle2girls(self,user_id, girl1_id, girl2_id):
         battle_log = ""
