@@ -3,7 +3,6 @@ import codecs
 import configparser
 import os
 import random
-
 import discord
 import pandas
 
