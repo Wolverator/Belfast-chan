@@ -27,11 +27,6 @@ class BelfastGame(commands.Cog):
         else:
             return "Commander"
 
-    # @commands.command(brief="[owner-only]Load ships with min stats", hidden=True)
-    # @commands.is_owner()
-    # async def load1(self, ctx):
-    #     self.bot.get_cog('AzurLane').update_html_file('ALDB/List_of_Ships_by_Stats.html', 'https://azurlane.koumakan.jp/List_of_Ships_by_Stats')     моделирование системы прогнать самостоятельно
-
     @commands.command(pass_context=True, brief="Duel another player at same server")
     async def duel(self, ctx, *, user_to_duel:str):
         user = self.bot.get_cog("BelfastUtils").get_user(ctx.guild, user_to_duel)
