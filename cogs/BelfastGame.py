@@ -14,7 +14,7 @@ from discord.ext import commands
 
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "users/")
 
-build_cost = 999
+build_cost = 100
 
 
 class BelfastGame(commands.Cog):
