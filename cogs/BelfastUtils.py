@@ -4,9 +4,9 @@ import configparser
 import datetime
 import os
 import time
-from platform import python_version
-
 import discord
+
+from platform import python_version
 from colorama import Fore
 from discord.ext import commands
 from discord.utils import find
@@ -14,9 +14,7 @@ from discord.utils import find
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
 time_start = time.time()
 
-
 def logtime(): return str(datetime.datetime.now().time()).partition('.')[0] + " "
-
 
 class BelfastUtils(commands.Cog):
     def __init__(self, bot):
@@ -105,7 +103,6 @@ class BelfastUtils(commands.Cog):
         text += "Discord.py version: **{0}**\n".format(str(discord.__version__))
 
         resultEmbed.description = text
-
         msg = await ctx.send(embed=resultEmbed)
         await asyncio.sleep(45)
         await msg.delete()
@@ -132,7 +129,6 @@ class BelfastUtils(commands.Cog):
 
 
 def scan_dir(path):
-    # Counts the number of files in a directory
     count = 0
     code_lines = 0
     size = 0
@@ -149,7 +145,6 @@ def scan_dir(path):
             code_lines += c_l
             size += s
     return count, code_lines, size
-
 
 def setup(bot):
     bot.add_cog(BelfastUtils(bot))

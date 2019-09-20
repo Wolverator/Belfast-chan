@@ -12,9 +12,7 @@ from colorama import Fore
 from discord.ext import commands
 
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "users/")
-
 build_cost = 100
-
 
 class BelfastGame(commands.Cog):
     def __init__(self, bot):
@@ -69,7 +67,6 @@ class BelfastGame(commands.Cog):
             if girl2.health>0 and girl2.torpedo>0 and (time % (200-(girl2.reload*2)) == 0): battle_log += str(time)+"s: "+girl2.launch_torps(girl1)
             if girl1.health>0 and girl1.aviation>0 and (time % (200-(girl1.reload*2)) == 0): battle_log += str(time)+"s: "+girl1.aviation_attack(girl2)
             if girl2.health>0 and girl2.aviation>0 and (time % (200-(girl2.reload*2)) == 0): battle_log += str(time)+"s: "+girl2.aviation_attack(girl1)
-
             time+=1
         battle_log+= girl1.name+" finished battle with "+str(girl1.health)+" HP while "+girl2.name+" finished battle with "+str(girl2.health)+" HP!"
         return battle_log
@@ -88,15 +85,12 @@ class BelfastGame(commands.Cog):
                     save_profile(ctx.author.id, profile)
                     times -= 1
                     await asyncio.sleep(1)
-
             else:
                 await ctx.send(":no_entry: Sorry, " + self.user(ctx.author.id) + "!\nBut you don't have enough money to do that")
         else:
             await ctx.send(":no_entry: Sorry, " + self.user(ctx.author.id) + "!\nBut you have no profile yet. Create one with ``Bel new``")
 
     def _build(self,_user:discord.user):
-        # table = {'DD':1, 'CL':4, 'CA':7, 'BB':10, 'BC':13, 'BM':161, 'CV':19, 'CVL':22, 'AR':25, 'SS':28}
-
         _url = "https://azurlane.koumakan.jp/List_of_Ships"  # _by_Stats"
         path_to_html_file = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "ALDB/List_of_Ships.html")
         self.bot.get_cog("AzurLane").update_html_file(path_to_html_file, _url)

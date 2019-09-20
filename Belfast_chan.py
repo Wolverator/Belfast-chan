@@ -2,15 +2,12 @@ import asyncio
 import configparser
 import datetime
 import os
-
 import discord
 from cogs.BelfastUtils import logtime
 from colorama import init, Fore
 from discord.ext import commands
-
 init(autoreset=True)
-prefixes = ['Bel ', 'Belfast ', 'Belfast-chan ', 'Bel-chan ', 'Belchan ', 'bel ', 'belfast ', 'belfast-chan ',
-            'bel-chan ', 'belchan ']
+prefixes = ['Bel ', 'Belfast ', 'Belfast-chan ', 'Bel-chan ', 'Belchan ', 'bel ', 'belfast ', 'belfast-chan ', 'bel-chan ', 'belchan ']
 dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path)
 print("path: " + dir_path)
@@ -20,7 +17,6 @@ config.read(dir_path + "/config/config.ini")
 
 cogs = ['cogs.AzurLane', 'cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.BelfastGame']
 
-
 # funcs
 
 def get_prefix(client, message):
@@ -28,7 +24,6 @@ def get_prefix(client, message):
     if not message.guild:
         bot_prefixes = ['']
     return commands.when_mentioned_or(*bot_prefixes)(client, message)
-
 
 class BelfastBot(commands.Bot):
     def __init__(self):
@@ -178,7 +173,6 @@ class BelfastBot(commands.Bot):
             await asyncio.sleep(15)
             await msg.delete()
             raise error
-
 
 if __name__ == '__main__':
     BelfastBot().run(config['Main']['token'], bot=True, reconnect=True)

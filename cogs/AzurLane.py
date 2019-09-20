@@ -3,7 +3,6 @@ import codecs
 import datetime
 import os
 import time
-
 import discord
 import pandas
 import requests
@@ -70,14 +69,8 @@ class AzurLane(commands.Cog):
 
     # finished funcs
     def update_html_file(self, path_to_html_file: str, _url: str):
-        #print("IN update_html_file: " + path_to_html_file)
         file_exists = os.path.exists(path_to_html_file)
-        #print("IN update_html_file: File exists? " + str(file_exists))
-        #if (file_exists):
-            #print("IN update_html_file: File requires update? " +str(((time.time() - os.path.getmtime(path_to_html_file)) > 1200 * 3600)))
-
         if (not file_exists) or (file_exists and ((time.time() - os.path.getmtime(path_to_html_file)) > 1200 * 3600)):
-        #try:
             print(logtime() + "URL update: " + _url)
             web_info = requests.get(_url)
             with codecs.open(path_to_html_file, mode='w', encoding='utf-8') as output_file:
@@ -87,8 +80,6 @@ class AzurLane(commands.Cog):
             with codecs.open(path_to_html_file.replace(".html", ".txt"), 'w', 'utf-8') as txt_file:
                 for item in info:
                     txt_file.write(item.to_string() + '\n')
-        #except ImportError:
-            #return 0
         return 1
 
     async def get_ships_list(self,ctx : discord.ext.commands.context, table: int, column: int):
@@ -218,7 +209,6 @@ class AzurLane(commands.Cog):
         return resultEmbed
 
     def fix_name(self, girl_name: str):
-        # print(logtime()+"Input name:"+Fore.YELLOW+girl_name)
         ship_name = girl_name.replace(' ', '_').replace('(battleship)', '(Battleship)').replace('_battleship', '_(Battleship)').replace('_bb', '_(Battleship)').replace("mkii", "MKII").replace("grosse", "Grosse")
         ship_name = ship_name.replace("virginia", "Virginia").replace("bullin", "Bullin").replace("ausburne", "Ausburne").replace("diego", "Diego").replace("lake", "Lake").replace("city", "City").replace("nep", "Nep")
         ship_name = ship_name.replace("carolina", "Carolina").replace("island", "Island").replace("dakota", "Dakota").replace("elizabeth", "Elizabeth").replace("wales", "Wales").replace("york", "York").replace("Janna", "Jeanne")
@@ -230,9 +220,7 @@ class AzurLane(commands.Cog):
         ship_name = ship_name.replace("kizuna_ai", "Kizuna_AI").replace("Kizuna_ai", "Kizuna_AI").replace("gamer", "Gamer")
         if ship_name == "Graf_Spee": ship_name = ship_name.replace("Graf_Spee", "Admiral_Graf_Spee")
         if ship_name == "Enterprize": ship_name = ship_name.replace("Enterprize", "Enterprise")
-        # print(logtime()+"Output name:"+Fore.GREEN+ship_name)
         return ship_name
-
 
 def setup(bot):
     bot.add_cog(AzurLane(bot))
