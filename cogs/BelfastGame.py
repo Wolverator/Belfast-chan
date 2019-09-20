@@ -339,6 +339,7 @@ class BattleGirl:
         self.evasion = int(girl_config.get('stats', 'evasion'))
     def fire_shells(self, enemy):
         dmg = int((self.accuracy/enemy.evasion)*self.firepower)
+        dmg = randomise_dmg(dmg)
         if enemy.classification == "Submarine": dmg = int(dmg / 5)
         if self.torpedo == 0 and self.aviation == 0: dmg = int(dmg * 1.2)
         if self.classification == "Battlecruiser" or self.classification == "Battleship": dmg = int(dmg*2)
@@ -346,15 +347,22 @@ class BattleGirl:
         return str(self.name +" fired shells at "+enemy.name+" with "+str(dmg)+ " damage dealt!\n")
     def launch_torps(self, enemy):
         dmg = int((self.accuracy / enemy.evasion) * self.torpedo)
+        dmg = randomise_dmg(dmg)
         if enemy.classification == "Submarine": dmg = int(dmg / 5)
         if enemy.classification == "Destroyer": dmg = int(dmg / 2)
         enemy.health = enemy.health - dmg
         return str(self.name + " launched torps at " + enemy.name + " with " + str(dmg) + " damage dealt!\n")
     def aviation_attack(self, enemy):
         dmg = int((self.aviation *6/ (1+enemy.antiair)) * self.aviation)
+        dmg = randomise_dmg(dmg)
         if enemy.classification == "Submarine": dmg = int(dmg / 10)
         enemy.health = enemy.health - dmg
         return str(self.name + " attacked " + enemy.name + " using planes with " + str(dmg) + " damage dealt!\n")
+
+def randomise_dmg(dmg_to_randomize:int):
+    R = random.Random()
+    difference = dmg_to_randomize * 0.1
+    return R.randint(int(dmg_to_randomize-difference),int(dmg_to_randomize+difference))
 
 def setup(bot):
     bot.add_cog(BelfastGame(bot))
