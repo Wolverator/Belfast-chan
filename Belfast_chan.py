@@ -45,8 +45,6 @@ class BelfastBot(commands.Bot):
         else:
             return "Commander"
 
-    # message events
-
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
