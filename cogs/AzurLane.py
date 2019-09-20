@@ -18,7 +18,6 @@ retro_type = {'120r': 3, '120': 4, '100r': 5, '100': 6,  'base': 7}
 ships = {}
 placeholders = ('--', 'nan', '-')
 
-
 # noinspection PyMethodMayBeStatic
 class AzurLane(commands.Cog):
     def __init__(self, bot):
