@@ -4,7 +4,6 @@ import datetime
 import os
 
 import discord
-import requests
 from cogs.BelfastUtils import logtime
 from colorama import init, Fore
 from discord.ext import commands
@@ -12,7 +11,7 @@ from discord.ext import commands
 init(autoreset=True)
 prefixes = ['Bel ', 'Belfast ', 'Belfast-chan ', 'Bel-chan ', 'Belchan ', 'bel ', 'belfast ', 'belfast-chan ',
             'bel-chan ', 'belchan ']
-dir_path = os.path.dirname(os.path.realpath(__file__))  # .replace("cogs","")
+dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path)
 print("path: " + dir_path)
 description = "How can i help you, Commander?"
@@ -38,11 +37,7 @@ class BelfastBot(commands.Bot):
         self.owner_id = 560867880632320020
         self.TigersMeadow = self.get_guild(566171342953512963)
         for extension in cogs:
-            # try:
             self.load_extension(extension)
-            # except Exception as e:
-            # print(f'Failed to load extension {extension}.')
-            # print(Fore.RED+str(e))
 
     def _user(self, id: int):
         if id == self.owner_id:
@@ -78,7 +73,6 @@ class BelfastBot(commands.Bot):
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
-        # print(logtime() + Fore.CYAN + str(user) + "|reacted with" + Fore.RESET + " |" + str(reaction) + "|")
         if not user.bot:
             emojis = []
             for _reaction in reaction.message.reactions:
@@ -104,7 +98,6 @@ class BelfastBot(commands.Bot):
                     ""
                 await reaction.message.edit(
                     embed=self.get_cog('AzurLane').update_embed(reaction.message.embeds[0], stat_type))
-        # return reaction, user
 
     # guild events
     @commands.Cog.listener()
@@ -169,18 +162,6 @@ class BelfastBot(commands.Bot):
             from cogs.FinishedCommands import mt_reminder
             await mt_reminder()
             await asyncio.sleep(180)
-
-    # @commands.Cog.listener()
-    # async def on_disconnect(self):
-    #     print(logtime() + Fore.RED + "DISCONNECTED")
-    #     os._exit(0)
-    # print(logtime() + Fore.YELLOW + "Reconnect attempt in 30 seconds...")
-    # time.sleep(30)
-    # print(logtime() + Fore.YELLOW + "Trying to reconnect...")
-    # try:
-    #     self.run(config['Main']['token'], bot=True)
-    # except:
-    #     ""
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
