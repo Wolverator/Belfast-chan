@@ -271,7 +271,8 @@ class AzurLane(commands.Cog):
             .replace("Repulce", "Repulse")\
             .replace("kizuna_ai", "Kizuna_AI")\
             .replace("Kizuna_ai", "Kizuna_AI")\
-            .replace("gamer", "Gamer")
+            .replace("gamer", "Gamer")\
+            .replace("sandy", "Sandy")
         if ship_name == "Graf_Spee": ship_name = "Admiral_Graf_Spee"
         if ship_name == "Enterprize": ship_name = "Enterprise"
         return ship_name
