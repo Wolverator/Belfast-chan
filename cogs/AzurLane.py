@@ -46,7 +46,7 @@ class AzurLane(commands.Cog):
             message = await ctx.send(embed=embed)
             if not embed.title == "Excuse me, but...":
                 print(str(datetime.datetime.utcnow().time()).partition('.')[0] + " " + Fore.CYAN + str(
-                    ctx.author) + Fore.RESET + " asked info about " + Fore.GREEN + embed.title)
+                    ctx.author) + Fore.RESET + " asked info about " + Fore.GREEN + str(embed.title))
                 await message.add_reaction("1⃣")
                 await message.add_reaction("2⃣")
                 await message.add_reaction("3⃣")
