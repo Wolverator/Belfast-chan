@@ -117,7 +117,8 @@ class AzurLane(commands.Cog):
         Retrofit = False
         Submarine = False
         try:
-            self.update_html_file(path_to_file, 'https://azurlane.koumakan.jp/' + ship_name.replace("'", '%27').replace('(', '%28').replace(')', '%29'))
+            shiplink = 'https://azurlane.koumakan.jp/' + ship_name.replace("'", '%27').replace('(', '%28').replace(')', '%29')
+            self.update_html_file(path_to_file, shiplink)
         except ImportError:
             resultEmbed.title = "Excuse me, but..."
             resultEmbed.description = "Are you sure you wrote girl's name correctly? :thinking:"
@@ -142,7 +143,7 @@ class AzurLane(commands.Cog):
             "\%C3\%B6", 'ö')
         print("pic url = "+pic_url)
         resultEmbed.set_thumbnail(url='https://azurlane.koumakan.jp/' + pic_url)
-        resultEmbed.title = ship_name.replace('_', ' ')
+        resultEmbed.set_author(name=ship_name.replace('_', ' '), url=shiplink)
         resultEmbed.description = str(dicts_info[0][0][0]) + ": " + str(dicts_info[0][1][0]) + "\n"
         resultEmbed.description += str(dicts_info[0][0][1]) + ": " + str(dicts_info[0][1][1]) + "\n"
         resultEmbed.description += str(dicts_info[1][0][1]) + ": " + str(dicts_info[1][1][1]) + "\n"
