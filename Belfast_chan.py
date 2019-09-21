@@ -18,7 +18,7 @@ print("path: " + dir_path)
 description = "How can i help you, Commander?"
 config = configparser.ConfigParser()
 config.read(dir_path + "/config/config.ini")
-prefixes = config.get('Main','prefixes')
+prefixes = ['Bel ', 'Belfast ', 'Belfast-chan ', 'Bel-chan ', 'Belchan ', 'bel ', 'belfast ', 'belfast-chan ', 'bel-chan ', 'belchan ']
 
 cogs = ['cogs.AzurLane', 'cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.BelfastGame']
 
@@ -195,5 +195,8 @@ if __name__ == '__main__':
     create_if_not_exists("/config/config.ini")
     create_if_not_exists("/config/last maintenance.txt")
     create_if_not_exists("/ALDB")
+    create_if_not_exists("/ALDB/ships")
     create_if_not_exists("/servers")
+    create_if_not_exists("/suggests")
+    create_if_not_exists("/users")
     BelfastBot().run(config['Main']['token'], bot=True, reconnect=True)
