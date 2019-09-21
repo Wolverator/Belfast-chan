@@ -113,17 +113,24 @@ class AzurLane(commands.Cog):
     def get_ship_info_web(self, girl_name: str):
         ship_name = self.fix_name(girl_name)
         resultEmbed = discord.Embed()
+        print(">>>>>> " + ship_name)
         path_to_file = dir_path + 'ALDB/ships/' + ship_name + '.html'
         Retrofit = False
         Submarine = False
         try:
-            shiplink = 'https://azurlane.koumakan.jp/' + ship_name.replace("'", '%27').replace('(', '%28').replace(')', '%29')
+            shiplink = 'https://azurlane.koumakan.jp/' + ship_name
             self.update_html_file(path_to_file, shiplink)
         except ImportError:
             resultEmbed.title = "Excuse me, but..."
             resultEmbed.description = "Are you sure you wrote girl's name correctly? :thinking:"
             return resultEmbed
-        info = pandas.read_html(path_to_file)
+        try:
+            info = pandas.read_html(path_to_file)
+        except ImportError:
+            resultEmbed.title = "Excuse me, but..."
+            resultEmbed.description = "There's no info about girls on that page =("
+            os.remove(path_to_file)
+            return resultEmbed
         file_i = codecs.open(dir_path + 'ALDB/ships/' + ship_name + '.txt', encoding='utf-8', mode='w')
         dicts_info = {}
         for i in range(len(info)):
@@ -133,17 +140,18 @@ class AzurLane(commands.Cog):
         file_i.close()
         if (dicts_info[1][1][2] == "Submarine"): Submarine = True
         web_raw = codecs.open(path_to_file, encoding='utf-8').read()
-        print("input name and faction = " + ship_name+"   "+dicts_info[1][1][1])
         if ship_name.__contains__("Neptune") and dicts_info[1][1][1].__contains__("Royal Navy"):
-            ship_name = ship_name.replace("Neptune", "HMS Neptune")
+            ship_name = "HMS Neptune"
         elif ship_name.__contains__("Neptune") and dicts_info[1][1][1].__contains__("Neptunia"):
-            ship_name = ship_name.replace("Neptune", "HDN Neptune")
-        print("changed name = " + ship_name)
-        pic_url = (web_raw.partition('<img alt="' + ship_name.replace('_', ' ') + 'Icon.png" src="')[2].partition('"')[0]).replace("'", '\%27').replace('(', '\%28').replace(')', '\%29').replace(
-            "\%C3\%B6", 'ö')
+            ship_name = "HDN Neptune"
+        pic_url = (web_raw.partition('<img alt="')[2].partition('"')[2].partition('"')[2].partition('"')[0])\
+            .replace('\%27', "'")\
+            .replace('\%28', '(')\
+            .replace('\%29', ')')\
+            .replace("\%C3\%B6", 'ö')
         print("pic url = "+pic_url)
         resultEmbed.set_thumbnail(url='https://azurlane.koumakan.jp/' + pic_url)
-        resultEmbed.set_author(name=ship_name.replace('_', ' '), url=shiplink)
+        resultEmbed.set_author(name="Link to wiki", url=shiplink)
         resultEmbed.description = str(dicts_info[0][0][0]) + ": " + str(dicts_info[0][1][0]) + "\n"
         resultEmbed.description += str(dicts_info[0][0][1]) + ": " + str(dicts_info[0][1][1]) + "\n"
         resultEmbed.description += str(dicts_info[1][0][1]) + ": " + str(dicts_info[1][1][1]) + "\n"
@@ -179,6 +187,7 @@ class AzurLane(commands.Cog):
         resultEmbed.add_field(name="Luck", value=str(dicts_info[base][7][0]), inline=True)
         resultEmbed.add_field(name="Speed", value=str(dicts_info[base][7][1]), inline=True)
         resultEmbed.add_field(name="Accuracy", value=str(dicts_info[base][7][2]), inline=True)
+        resultEmbed.title = ship_name.replace("_", " ")
         return resultEmbed
 
     def update_embed(self, embed: discord.Embed, stats_type: str):
@@ -213,7 +222,8 @@ class AzurLane(commands.Cog):
 
     def fix_name(self, girl_name: str):
         ship_name = girl_name.replace(' ', '_')\
-            .replace('(battleship)', '(Battleship)')\
+            .replace('(battleship)', '_(Battleship)') \
+            .replace('_(battleship)', '_(Battleship)') \
             .replace('_battleship', '_(Battleship)')\
             .replace('_bb', '_(Battleship)')\
             .replace("mkii", "MKII")\
@@ -272,7 +282,8 @@ class AzurLane(commands.Cog):
             .replace("kizuna_ai", "Kizuna_AI")\
             .replace("Kizuna_ai", "Kizuna_AI")\
             .replace("gamer", "Gamer")\
-            .replace("sandy", "Sandy")
+            .replace("sandy", "Sandy")\
+            .replace("Hdn", "HDN")
         if ship_name == "Graf_Spee": ship_name = "Admiral_Graf_Spee"
         if ship_name == "Enterprize": ship_name = "Enterprise"
         return ship_name
