@@ -29,12 +29,14 @@ class AzurLane(commands.Cog):
             return "Commander"
 
     @commands.command(pass_context=True, aliases=['girl', 'ship'], brief="Show girl's info from official Wiki")
-    async def info(self, ctx, *, girl_name: str):
+    async def info(self, ctx, *, girl_name = "placeholderLVL99999"):
         await ctx.channel.trigger_typing()
-        girl_name = girl_name.capitalize().strip(" \n")
         # noinspection PyArgumentList
-        if girl_name:
+        if girl_name.__contains__("placeholderLVL99999"):
+            await ctx.send("You forgot to choose girl's name, " + self.user(ctx.author.id) + "!")
+        else:
             # noinspection PyCallByClass,PyArgumentList
+            girl_name = girl_name.capitalize().strip(" \n")
             embed = self.get_ship_info_web(girl_name)
             if not embed.title == "Excuse me, but...":
                 embed.set_footer(text=str(ctx.author.id))
@@ -48,8 +50,6 @@ class AzurLane(commands.Cog):
                 if "**RETROFITTABLE**" in message.embeds[0].description:
                     await message.add_reaction("4⃣")
                     await message.add_reaction("5⃣")
-        else:
-            await ctx.send("You forgot to print girl's name, " + self.user(ctx.author.id) + "!")
 
     @commands.command(pass_context=True, brief="Show list of Azur Lane ships by category and type")
     async def ships(self, ctx, category: str, sort_by='type'):
@@ -113,18 +113,13 @@ class AzurLane(commands.Cog):
         path_to_file = dir_path + 'ALDB/ships/' + ship_name + '.html'
         Retrofit = False
         Submarine = False
-        file_result = self.update_html_file(path_to_file, 'https://azurlane.koumakan.jp/' + ship_name.replace("'", '%27').replace('(', '%28').replace(')', '%29'))
-        if file_result == 0:
-            resultEmbed.title = "Error"
-            resultEmbed.description = "No web-page with that name or unavailable23"
-            return resultEmbed
         try:
-            info = pandas.read_html(path_to_file)
+            self.update_html_file(path_to_file, 'https://azurlane.koumakan.jp/' + ship_name.replace("'", '%27').replace('(', '%28').replace(')', '%29'))
         except ImportError:
             resultEmbed.title = "Excuse me, but..."
             resultEmbed.description = "Are you sure you wrote girl's name correctly? :thinking:"
-            os.remove(path_to_file)
             return resultEmbed
+        info = pandas.read_html(path_to_file)
         file_i = codecs.open(dir_path + 'ALDB/ships/' + ship_name + '.txt', encoding='utf-8', mode='w')
         dicts_info = {}
         for i in range(len(info)):
