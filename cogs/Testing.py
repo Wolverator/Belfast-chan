@@ -1,26 +1,19 @@
 import os
-
 import discord
 from discord.ext import commands
 from discord.ext.commands import has_permissions
 
-# import threading
-
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
-
 
 class Testing(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # self.MT_remind = asyncio.create_task(mt_reminder())
 
     def user(self, id: int):
         if id == self.bot.owner_id:
             return "Master"
         else:
             return "Commander"
-
-    # testing
 
     @commands.command(pass_context=True, hidden=True)
     @has_permissions(manage_roles=True)
@@ -43,7 +36,6 @@ class Testing(commands.Cog):
                 await ctx.send("Done! :white_check_mark:")
         except Exception:
             await ctx.send("Error! :no_entry:\nSomething went wrong or someone don't have permissions for that role.")
-
 
 def setup(bot):
     bot.add_cog(Testing(bot))

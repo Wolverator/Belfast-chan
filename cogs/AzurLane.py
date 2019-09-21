@@ -3,7 +3,6 @@ import codecs
 import datetime
 import os
 import time
-
 import discord
 import pandas
 import requests
@@ -30,12 +29,17 @@ class AzurLane(commands.Cog):
             return "Commander"
 
     @commands.command(pass_context=True, aliases=['girl', 'ship'], brief="Show girl's info from official Wiki")
-    async def info(self, ctx, *, girl_name: str):
+    async def info(self, ctx, *, girl_name = "placeholderLVL99999"):
         await ctx.channel.trigger_typing()
-        girl_name = girl_name.capitalize().strip(" \n")
         # noinspection PyArgumentList
-        if girl_name:
+        if girl_name.__contains__("placeholderLVL99999"):
+            resultEmbed = discord.Embed()
+            resultEmbed.title = "Excuse me, but..."
+            resultEmbed.description = "You forgot to choose girl's name, " + self.user(ctx.author.id) + "!"
+            await ctx.send(embed = resultEmbed)
+        else:
             # noinspection PyCallByClass,PyArgumentList
+            girl_name = girl_name.capitalize().strip(" \n")
             embed = self.get_ship_info_web(girl_name)
             if not embed.title == "Excuse me, but...":
                 embed.set_footer(text=str(ctx.author.id))
@@ -49,8 +53,6 @@ class AzurLane(commands.Cog):
                 if "**RETROFITTABLE**" in message.embeds[0].description:
                     await message.add_reaction("4⃣")
                     await message.add_reaction("5⃣")
-        else:
-            await ctx.send("You forgot to print girl's name, " + self.user(ctx.author.id) + "!")
 
     @commands.command(pass_context=True, brief="Show list of Azur Lane ships by category and type")
     async def ships(self, ctx, category: str, sort_by='type'):
@@ -60,8 +62,7 @@ class AzurLane(commands.Cog):
         sorts = {'nation': 0, 'nations': 0, 'type': 1, 'types': 1, 'rarity': 2}
         await ctx.channel.trigger_typing()
         if category and category in categories and sort_by and sort_by in sorts:
-            embed = await self.bot.get_cog('AzurLane').get_ships_list(ctx, categories.get(category), sorts.get(sort_by))
-            #await ctx.send(embed=embed)
+            await self.bot.get_cog('AzurLane').get_ships_list(ctx, categories.get(category), sorts.get(sort_by))
         else:
             msg = await ctx.send("Please, specify category and sort option:\nCategories: " + (
                 ", ".join(categories.keys())) + "\nSort options: " + (", ".join(sorts.keys())))
@@ -70,25 +71,17 @@ class AzurLane(commands.Cog):
 
     # finished funcs
     def update_html_file(self, path_to_html_file: str, _url: str):
-        #print("IN update_html_file: " + path_to_html_file)
         file_exists = os.path.exists(path_to_html_file)
-        #print("IN update_html_file: File exists? " + str(file_exists))
-        #if (file_exists):
-            #print("IN update_html_file: File requires update? " +str(((time.time() - os.path.getmtime(path_to_html_file)) > 1200 * 3600)))
-
         if (not file_exists) or (file_exists and ((time.time() - os.path.getmtime(path_to_html_file)) > 1200 * 3600)):
-        #try:
             print(logtime() + "URL update: " + _url)
             web_info = requests.get(_url)
             with codecs.open(path_to_html_file, mode='w', encoding='utf-8') as output_file:
-                output_file.write(str(web_info.text))#.replace('/n', '').strip("b'"))
+                output_file.write(str(web_info.text))
                 output_file.close()
             info = pandas.read_html(path_to_html_file)
             with codecs.open(path_to_html_file.replace(".html", ".txt"), 'w', 'utf-8') as txt_file:
                 for item in info:
                     txt_file.write(item.to_string() + '\n')
-        #except ImportError:
-            #return 0
         return 1
 
     async def get_ships_list(self,ctx : discord.ext.commands.context, table: int, column: int):
@@ -112,12 +105,10 @@ class AzurLane(commands.Cog):
             else:
                 ship_types[info[table][colum][row]] += ", " + str(info[table]['Name'][row])
         for key in ship_types.keys():
-            resultEmbed.add_field(name=key, value=str(ship_types.get(key)), inline=True)
             emb = discord.Embed()
             emb.title = key
             emb.description = str(ship_types.get(key))
             await ctx.send(embed = emb)
-        return resultEmbed
 
     def get_ship_info_web(self, girl_name: str):
         ship_name = self.fix_name(girl_name)
@@ -125,18 +116,13 @@ class AzurLane(commands.Cog):
         path_to_file = dir_path + 'ALDB/ships/' + ship_name + '.html'
         Retrofit = False
         Submarine = False
-        file_result = self.update_html_file(path_to_file, 'https://azurlane.koumakan.jp/' + ship_name.replace("'", '%27').replace('(', '%28').replace(')', '%29'))
-        if file_result == 0:
-            resultEmbed.title = "Error"
-            resultEmbed.description = "No web-page with that name or unavailable23"
-            return resultEmbed
         try:
-            info = pandas.read_html(path_to_file)
+            self.update_html_file(path_to_file, 'https://azurlane.koumakan.jp/' + ship_name.replace("'", '%27').replace('(', '%28').replace(')', '%29'))
         except ImportError:
             resultEmbed.title = "Excuse me, but..."
             resultEmbed.description = "Are you sure you wrote girl's name correctly? :thinking:"
-            os.remove(path_to_file)
             return resultEmbed
+        info = pandas.read_html(path_to_file)
         file_i = codecs.open(dir_path + 'ALDB/ships/' + ship_name + '.txt', encoding='utf-8', mode='w')
         dicts_info = {}
         for i in range(len(info)):
@@ -218,21 +204,69 @@ class AzurLane(commands.Cog):
         return resultEmbed
 
     def fix_name(self, girl_name: str):
-        # print(logtime()+"Input name:"+Fore.YELLOW+girl_name)
-        ship_name = girl_name.replace(' ', '_').replace('(battleship)', '(Battleship)').replace('_battleship', '_(Battleship)').replace('_bb', '_(Battleship)').replace("mkii", "MKII").replace("grosse", "Grosse")
-        ship_name = ship_name.replace("virginia", "Virginia").replace("bullin", "Bullin").replace("ausburne", "Ausburne").replace("diego", "Diego").replace("lake", "Lake").replace("city", "City").replace("nep", "Nep")
-        ship_name = ship_name.replace("carolina", "Carolina").replace("island", "Island").replace("dakota", "Dakota").replace("elizabeth", "Elizabeth").replace("wales", "Wales").replace("york", "York").replace("Janna", "Jeanne")
-        ship_name = ship_name.replace("konigsberg", "Königsberg").replace("königsberg", "Königsberg").replace("koln", "Köln").replace("köln", "Köln").replace("Koln", "Köln").replace("Konigsberg", "Königsberg").replace("d'ark", "d'Arc")
-        ship_name = ship_name.replace("hipper", "Hipper").replace("eugene", "Eugene").replace("graf", "Graf").replace("spee", "Spee").replace("zepelin", "Zeppelin").replace("zeppelin", "Zeppelin").replace("Janne", "Jeanne")
-        ship_name = ship_name.replace("shan", "Shan").replace("shun", "Shun").replace("chun", "Chun").replace("-la", "-La").replace("yuan", "Yuan").replace("_sen", "_Sen").replace("hai", "Hai").replace("heart", "Heart")
-        ship_name = ship_name.replace("louis", "Louis").replace("e_bel", "e_Bel").replace("Bel-chan", "Little_Bel").replace("Belchan", "Little_Bel").replace("triom", "Triom").replace("bert", "Bert").replace("mars", "Mars")
-        ship_name = ship_name.replace("bart", "Bart").replace("teme", "Teme").replace("r_hill", "r_Hill").replace("d'arc", "d'Arc").replace("darc", "d'Arc").replace("hms", "HMS").replace("dark", "d'Arc").replace("Repulce", "Repulse")
-        ship_name = ship_name.replace("kizuna_ai", "Kizuna_AI").replace("Kizuna_ai", "Kizuna_AI").replace("gamer", "Gamer")
-        if ship_name == "Graf_Spee": ship_name = ship_name.replace("Graf_Spee", "Admiral_Graf_Spee")
-        if ship_name == "Enterprize": ship_name = ship_name.replace("Enterprize", "Enterprise")
-        # print(logtime()+"Output name:"+Fore.GREEN+ship_name)
+        ship_name = girl_name.replace(' ', '_')\
+            .replace('(battleship)', '(Battleship)')\
+            .replace('_battleship', '_(Battleship)')\
+            .replace('_bb', '_(Battleship)')\
+            .replace("mkii", "MKII")\
+            .replace("grosse", "Grosse")\
+            .replace("virginia", "Virginia")\
+            .replace("bullin", "Bullin")\
+            .replace("ausburne", "Ausburne")\
+            .replace("diego", "Diego")\
+            .replace("lake", "Lake")\
+            .replace("city", "City")\
+            .replace("nep", "Nep")\
+            .replace("carolina", "Carolina")\
+            .replace("island", "Island")\
+            .replace("dakota", "Dakota")\
+            .replace("elizabeth", "Elizabeth")\
+            .replace("wales", "Wales")\
+            .replace("york", "York")\
+            .replace("Janna", "Jeanne")\
+            .replace("konigsberg", "Königsberg")\
+            .replace("königsberg", "Königsberg")\
+            .replace("koln", "Köln")\
+            .replace("köln", "Köln")\
+            .replace("Koln", "Köln")\
+            .replace("Konigsberg", "Königsberg")\
+            .replace("d'ark", "d'Arc")\
+            .replace("hipper", "Hipper")\
+            .replace("eugene", "Eugene")\
+            .replace("graf", "Graf")\
+            .replace("spee", "Spee")\
+            .replace("zepelin", "Zeppelin")\
+            .replace("zeppelin", "Zeppelin")\
+            .replace("Janne", "Jeanne")\
+            .replace("shan", "Shan")\
+            .replace("shun", "Shun")\
+            .replace("chun", "Chun")\
+            .replace("-la", "-La")\
+            .replace("yuan", "Yuan")\
+            .replace("_sen", "_Sen")\
+            .replace("hai", "Hai")\
+            .replace("heart", "Heart")\
+            .replace("louis", "Louis")\
+            .replace("e_bel", "e_Bel")\
+            .replace("Bel-chan", "Little_Bel")\
+            .replace("Belchan", "Little_Bel")\
+            .replace("triom", "Triom")\
+            .replace("bert", "Bert")\
+            .replace("mars", "Mars")\
+            .replace("bart", "Bart")\
+            .replace("teme", "Teme")\
+            .replace("r_hill", "r_Hill")\
+            .replace("d'arc", "d'Arc")\
+            .replace("darc", "d'Arc")\
+            .replace("hms", "HMS")\
+            .replace("dark", "d'Arc")\
+            .replace("Repulce", "Repulse")\
+            .replace("kizuna_ai", "Kizuna_AI")\
+            .replace("Kizuna_ai", "Kizuna_AI")\
+            .replace("gamer", "Gamer")
+        if ship_name == "Graf_Spee": ship_name = "Admiral_Graf_Spee"
+        if ship_name == "Enterprize": ship_name = "Enterprise"
         return ship_name
-
 
 def setup(bot):
     bot.add_cog(AzurLane(bot))

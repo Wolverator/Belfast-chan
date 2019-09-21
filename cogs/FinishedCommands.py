@@ -3,20 +3,19 @@ import codecs
 import datetime
 import os
 import time
-from datetime import datetime as d
-
-import dateutil
 import discord
+from dateutil.parser import parser
+
 from cogs.BelfastUtils import logtime
 from colorama import Fore
 from discord.ext import commands
+from datetime import datetime as d
 
-DateParser = dateutil.parser.parser()
+DateParser = parser()
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
 time_start = time.time()
 maintenance_remind_where_whom = {}
-maintenance_finish = DateParser.parse(timestr=codecs.open(dir_path + "config/last maintenance.txt", encoding='utf-8').read())
-
+maintenance_finish = None
 
 def already_in_maintenance(id: int):
     result = False
@@ -24,15 +23,14 @@ def already_in_maintenance(id: int):
         if users.count(str("<@" + str(id) + ">")) >= 1: result = True
     return result
 
-
 async def mt_reminder():
     global maintenance_remind_where_whom
     global maintenance_finish
-    if (maintenance_finish.timestamp() - datetime.datetime.now().timestamp()) <= 0:
-        for channel in maintenance_remind_where_whom.keys():
-            await channel.send("Maintenance of AzurLane EN server should be finished now." + maintenance_remind_where_whom.get(channel))
-        maintenance_remind_where_whom = {}
-
+    if maintenance_finish is not None:
+        if (maintenance_finish.timestamp() - datetime.datetime.now().timestamp()) <= 0:
+            for channel in maintenance_remind_where_whom.keys():
+                await channel.send("Maintenance of AzurLane EN server should be finished now." + maintenance_remind_where_whom.get(channel))
+            maintenance_remind_where_whom = {}
 
 class General(commands.Cog):
     def __init__(self, bot):
@@ -43,7 +41,6 @@ class General(commands.Cog):
             return "Master"
         else:
             return "Commander"
-    #####################################
     @commands.command(pass_context=True, aliases=['hey', 'hello', 'hello?', 'answer'], hidden=True)
     async def test(self, ctx):
         await ctx.channel.trigger_typing()
@@ -56,16 +53,12 @@ class General(commands.Cog):
             msg = await ctx.send("How can i help you?\nFor more details, please write ``Bel info``.")
             await asyncio.sleep(15)
             await msg.delete()
-    #####################################
-
-
-
 
     @commands.command(pass_context=True, brief="Get invite to my server")
     async def server(self, ctx):
         await ctx.channel.trigger_typing()
         await asyncio.sleep(0.1)
-        await ctx.send("Join my Master's guild if you want or of you need help:\nhttps://discord.gg/86YrJNq")
+        await ctx.send("Join my Master's guild if you want or if you need some help:\nhttps://discord.gg/86YrJNq")
 
     @commands.command(pass_context=True, brief="Check online time")
     async def online(self, ctx):
@@ -73,7 +66,6 @@ class General(commands.Cog):
         await asyncio.sleep(0.1)
         msg = await ctx.send(
             "I'm online for " + str(datetime.timedelta(seconds=time.time() - time_start)).partition('.')[0] + " already, doing good.\nThanks for asking and may The Force be with you!")
-        print(logtime() + "time online")
         await asyncio.sleep(15)
         await msg.delete()
 
@@ -125,7 +117,6 @@ class General(commands.Cog):
                     maintenance_remind_where_whom[ctx.channel] = str("\n<@" + str(user_ID) + ">")
                 text += "\n" + str(self.bot.get_user(user_ID).display_name) + " was added to my 'to-remind-list', Master!.\nThus I'll mention them in this channel when servers will come online."
                 await ctx.message.add_reaction('✅')
-                # await self.MT_remind
         else:
             text = "Servers should be online, Commander.\nMay The Luck be with You!\n\nPrevious maintenance was finished: " + str(maintenance_finish)
         msg = await ctx.send(text)
@@ -150,7 +141,6 @@ class General(commands.Cog):
                     maintenance_remind_where_whom[ctx.channel] = str("\n<@" + str(ctx.author.id) + ">")
                 text += "\nI've also added you to 'to-remind-list', " + self.user(ctx.author.id) + ".\nThus I'll mention you in this channel when servers will come online."
                 await ctx.message.add_reaction('✅')
-                # await self.MT_remind
         else:
             text = "Servers should be online, Commander.\nMay The Luck be with You!\n"\
                    +"\nPrevious maintenance was finished: " + str(maintenance_finish) + " (UTC +3)"
@@ -186,7 +176,7 @@ class General(commands.Cog):
         await ctx.send(
             "Yes, Master! :white_check_mark:\nReposted this to " + str(chs) + " 'belfast-chan-news' channels.")
 
-    @commands.command(pass_context=True, aliases=['reboot'], brief="[owner-only]Log out and exit or reboot program", hidden=True)
+    @commands.command(pass_context=True, aliases=['logout'], brief="[owner-only]Log out and exit program", hidden=True)
     @commands.is_owner()
     async def exit(self, ctx):
         await ctx.channel.trigger_typing()
@@ -196,7 +186,6 @@ class General(commands.Cog):
         print(logtime() + Fore.YELLOW + "Logged out!")
         # noinspection PyProtectedMember
         os._exit(0)
-
 
 def setup(bot):
     bot.add_cog(General(bot))
