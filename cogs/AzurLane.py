@@ -33,7 +33,10 @@ class AzurLane(commands.Cog):
         await ctx.channel.trigger_typing()
         # noinspection PyArgumentList
         if girl_name.__contains__("placeholderLVL99999"):
-            await ctx.send("You forgot to choose girl's name, " + self.user(ctx.author.id) + "!")
+            resultEmbed = discord.Embed()
+            resultEmbed.title = "Excuse me, but..."
+            resultEmbed.description = "You forgot to choose girl's name, " + self.user(ctx.author.id) + "!"
+            await ctx.send(embed = resultEmbed)
         else:
             # noinspection PyCallByClass,PyArgumentList
             girl_name = girl_name.capitalize().strip(" \n")
