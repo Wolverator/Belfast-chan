@@ -5,7 +5,6 @@ import os
 import random
 import discord
 import pandas
-
 from cogs.AzurLane import no_retro_type, retro_type, submarine_type
 from cogs.BelfastUtils import logtime
 from colorama import Fore

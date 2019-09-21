@@ -56,7 +56,7 @@ class General(commands.Cog):
     async def server(self, ctx):
         await ctx.channel.trigger_typing()
         await asyncio.sleep(0.1)
-        await ctx.send("Join my Master's guild if you want or of you need help:\nhttps://discord.gg/86YrJNq")
+        await ctx.send("Join my Master's guild if you want or if you need some help:\nhttps://discord.gg/86YrJNq")
 
     @commands.command(pass_context=True, brief="Check online time")
     async def online(self, ctx):
@@ -64,7 +64,6 @@ class General(commands.Cog):
         await asyncio.sleep(0.1)
         msg = await ctx.send(
             "I'm online for " + str(datetime.timedelta(seconds=time.time() - time_start)).partition('.')[0] + " already, doing good.\nThanks for asking and may The Force be with you!")
-        print(logtime() + "time online")
         await asyncio.sleep(15)
         await msg.delete()
 
@@ -175,7 +174,7 @@ class General(commands.Cog):
         await ctx.send(
             "Yes, Master! :white_check_mark:\nReposted this to " + str(chs) + " 'belfast-chan-news' channels.")
 
-    @commands.command(pass_context=True, aliases=['reboot'], brief="[owner-only]Log out and exit or reboot program", hidden=True)
+    @commands.command(pass_context=True, aliases=['logout'], brief="[owner-only]Log out and exit program", hidden=True)
     @commands.is_owner()
     async def exit(self, ctx):
         await ctx.channel.trigger_typing()

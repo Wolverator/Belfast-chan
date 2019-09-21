@@ -59,8 +59,7 @@ class AzurLane(commands.Cog):
         sorts = {'nation': 0, 'nations': 0, 'type': 1, 'types': 1, 'rarity': 2}
         await ctx.channel.trigger_typing()
         if category and category in categories and sort_by and sort_by in sorts:
-            embed = await self.bot.get_cog('AzurLane').get_ships_list(ctx, categories.get(category), sorts.get(sort_by))
-            #await ctx.send(embed=embed)
+            await self.bot.get_cog('AzurLane').get_ships_list(ctx, categories.get(category), sorts.get(sort_by))
         else:
             msg = await ctx.send("Please, specify category and sort option:\nCategories: " + (
                 ", ".join(categories.keys())) + "\nSort options: " + (", ".join(sorts.keys())))
@@ -74,7 +73,7 @@ class AzurLane(commands.Cog):
             print(logtime() + "URL update: " + _url)
             web_info = requests.get(_url)
             with codecs.open(path_to_html_file, mode='w', encoding='utf-8') as output_file:
-                output_file.write(str(web_info.text))#.replace('/n', '').strip("b'"))
+                output_file.write(str(web_info.text))
                 output_file.close()
             info = pandas.read_html(path_to_html_file)
             with codecs.open(path_to_html_file.replace(".html", ".txt"), 'w', 'utf-8') as txt_file:
@@ -103,12 +102,10 @@ class AzurLane(commands.Cog):
             else:
                 ship_types[info[table][colum][row]] += ", " + str(info[table]['Name'][row])
         for key in ship_types.keys():
-            resultEmbed.add_field(name=key, value=str(ship_types.get(key)), inline=True)
             emb = discord.Embed()
             emb.title = key
             emb.description = str(ship_types.get(key))
             await ctx.send(embed = emb)
-        return resultEmbed
 
     def get_ship_info_web(self, girl_name: str):
         ship_name = self.fix_name(girl_name)
@@ -209,17 +206,68 @@ class AzurLane(commands.Cog):
         return resultEmbed
 
     def fix_name(self, girl_name: str):
-        ship_name = girl_name.replace(' ', '_').replace('(battleship)', '(Battleship)').replace('_battleship', '_(Battleship)').replace('_bb', '_(Battleship)').replace("mkii", "MKII").replace("grosse", "Grosse")
-        ship_name = ship_name.replace("virginia", "Virginia").replace("bullin", "Bullin").replace("ausburne", "Ausburne").replace("diego", "Diego").replace("lake", "Lake").replace("city", "City").replace("nep", "Nep")
-        ship_name = ship_name.replace("carolina", "Carolina").replace("island", "Island").replace("dakota", "Dakota").replace("elizabeth", "Elizabeth").replace("wales", "Wales").replace("york", "York").replace("Janna", "Jeanne")
-        ship_name = ship_name.replace("konigsberg", "Königsberg").replace("königsberg", "Königsberg").replace("koln", "Köln").replace("köln", "Köln").replace("Koln", "Köln").replace("Konigsberg", "Königsberg").replace("d'ark", "d'Arc")
-        ship_name = ship_name.replace("hipper", "Hipper").replace("eugene", "Eugene").replace("graf", "Graf").replace("spee", "Spee").replace("zepelin", "Zeppelin").replace("zeppelin", "Zeppelin").replace("Janne", "Jeanne")
-        ship_name = ship_name.replace("shan", "Shan").replace("shun", "Shun").replace("chun", "Chun").replace("-la", "-La").replace("yuan", "Yuan").replace("_sen", "_Sen").replace("hai", "Hai").replace("heart", "Heart")
-        ship_name = ship_name.replace("louis", "Louis").replace("e_bel", "e_Bel").replace("Bel-chan", "Little_Bel").replace("Belchan", "Little_Bel").replace("triom", "Triom").replace("bert", "Bert").replace("mars", "Mars")
-        ship_name = ship_name.replace("bart", "Bart").replace("teme", "Teme").replace("r_hill", "r_Hill").replace("d'arc", "d'Arc").replace("darc", "d'Arc").replace("hms", "HMS").replace("dark", "d'Arc").replace("Repulce", "Repulse")
-        ship_name = ship_name.replace("kizuna_ai", "Kizuna_AI").replace("Kizuna_ai", "Kizuna_AI").replace("gamer", "Gamer")
-        if ship_name == "Graf_Spee": ship_name = ship_name.replace("Graf_Spee", "Admiral_Graf_Spee")
-        if ship_name == "Enterprize": ship_name = ship_name.replace("Enterprize", "Enterprise")
+        ship_name = girl_name.replace(' ', '_')\
+            .replace('(battleship)', '(Battleship)')\
+            .replace('_battleship', '_(Battleship)')\
+            .replace('_bb', '_(Battleship)')\
+            .replace("mkii", "MKII")\
+            .replace("grosse", "Grosse")\
+            .replace("virginia", "Virginia")\
+            .replace("bullin", "Bullin")\
+            .replace("ausburne", "Ausburne")\
+            .replace("diego", "Diego")\
+            .replace("lake", "Lake")\
+            .replace("city", "City")\
+            .replace("nep", "Nep")\
+            .replace("carolina", "Carolina")\
+            .replace("island", "Island")\
+            .replace("dakota", "Dakota")\
+            .replace("elizabeth", "Elizabeth")\
+            .replace("wales", "Wales")\
+            .replace("york", "York")\
+            .replace("Janna", "Jeanne")\
+            .replace("konigsberg", "Königsberg")\
+            .replace("königsberg", "Königsberg")\
+            .replace("koln", "Köln")\
+            .replace("köln", "Köln")\
+            .replace("Koln", "Köln")\
+            .replace("Konigsberg", "Königsberg")\
+            .replace("d'ark", "d'Arc")\
+            .replace("hipper", "Hipper")\
+            .replace("eugene", "Eugene")\
+            .replace("graf", "Graf")\
+            .replace("spee", "Spee")\
+            .replace("zepelin", "Zeppelin")\
+            .replace("zeppelin", "Zeppelin")\
+            .replace("Janne", "Jeanne")\
+            .replace("shan", "Shan")\
+            .replace("shun", "Shun")\
+            .replace("chun", "Chun")\
+            .replace("-la", "-La")\
+            .replace("yuan", "Yuan")\
+            .replace("_sen", "_Sen")\
+            .replace("hai", "Hai")\
+            .replace("heart", "Heart")\
+            .replace("louis", "Louis")\
+            .replace("e_bel", "e_Bel")\
+            .replace("Bel-chan", "Little_Bel")\
+            .replace("Belchan", "Little_Bel")\
+            .replace("triom", "Triom")\
+            .replace("bert", "Bert")\
+            .replace("mars", "Mars")\
+            .replace("bart", "Bart")\
+            .replace("teme", "Teme")\
+            .replace("r_hill", "r_Hill")\
+            .replace("d'arc", "d'Arc")\
+            .replace("darc", "d'Arc")\
+            .replace("hms", "HMS")\
+            .replace("dark", "d'Arc")\
+            .replace("Repulce", "Repulse")\
+            .replace("kizuna_ai", "Kizuna_AI")\
+            .replace("Kizuna_ai", "Kizuna_AI")\
+            .replace("gamer", "Gamer")
+        if ship_name == "Graf_Spee": ship_name = "Admiral_Graf_Spee"
+        if ship_name == "Enterprize": ship_name = "Enterprise"
         return ship_name
 
 def setup(bot):

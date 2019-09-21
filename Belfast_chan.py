@@ -18,7 +18,6 @@ config.read(dir_path + "/config/config.ini")
 cogs = ['cogs.AzurLane', 'cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.BelfastGame']
 
 # funcs
-
 def get_prefix(client, message):
     bot_prefixes = prefixes
     if not message.guild:
@@ -71,8 +70,8 @@ class BelfastBot(commands.Bot):
             for _reaction in reaction.message.reactions:
                 if _reaction.me:
                     emojis.append(_reaction.emoji)
-            if user != self.user and reaction.message.embeds and reaction.message.embeds[0].footer and str(
-                    reaction.message.embeds[0].footer.text) == str(user.id) and reaction.emoji in emojis:
+            if user != self.user and reaction.message.embeds and reaction.message.embeds[0].footer\
+                and str(reaction.message.embeds[0].footer.text) == str(user.id) and reaction.emoji in emojis:
                 if reaction.emoji == "1⃣":
                     stat_type = 'base'
                 elif reaction.emoji == "2⃣":
@@ -109,10 +108,10 @@ class BelfastBot(commands.Bot):
             path = dir_path + "/servers/" + str(guild.id)
             if not os.path.exists(path):
                 os.mkdir(path)
-                print("Успешно создана директория %s " % path)
+                print("Successfully created folder %s " % path)
         except OSError as error:
             path = dir_path + "/servers/" + str(guild.id)
-            print("Создать директорию %s не удалось" % path)
+            print("Failed making '%s' folder" % path)
             print(Fore.RED + error)
 
     @commands.Cog.listener()
@@ -170,7 +169,7 @@ class BelfastBot(commands.Bot):
             return
         else:
             msg = await ctx.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:", description=str(error)))
-            await asyncio.sleep(15)
+            await asyncio.sleep(35)
             await msg.delete()
             raise error
 

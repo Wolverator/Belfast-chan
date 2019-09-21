@@ -43,7 +43,6 @@ class BelfastUtils(commands.Cog):
                     os.mkdir(path)
                     print(logtime() + "Успешно создана директория %s " % path)
             except OSError:
-
                 print(logtime() + "Создать директорию %s не удалось" % path)
 
     def get_user(self, guild:discord.Guild, some_user:str):
@@ -59,10 +58,12 @@ class BelfastUtils(commands.Cog):
         else:
             return "Commander"
 
-    @commands.command(pass_context=True, aliases=['avy', 'mypp'], brief="Show your or other user's avatar")
+    @commands.command(pass_context=True, aliases=['ava', 'mypp'], brief="Show your or other user's avatar")
     @commands.guild_only()
     async def avatar(self, ctx, *, some_user: str):
         await ctx.channel.trigger_typing()
+        if not some_user:
+            some_user = ctx.author.id
         user = self.get_user(ctx.guild, some_user)
         if user is not None:
             resultEmbed = discord.Embed()
@@ -126,7 +127,6 @@ class BelfastUtils(commands.Cog):
         msg = await ctx.send("```" + text + "```")
         await asyncio.sleep(15)
         await msg.delete()
-
 
 def scan_dir(path):
     count = 0
