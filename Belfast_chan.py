@@ -164,7 +164,7 @@ class BelfastBot(commands.Bot):
     async def on_ready(self):
         self.get_cog('BelfastUtils').process_guilds()
         if os.path.getsize(dir_path + "/config/last maintenance.txt") > 0:
-            self.get_cog('FinishedCommands').maintenance_finish = DateParser.parse(timestr=codecs.open(dir_path + "/config/last maintenance.txt", encoding='utf-8').read())
+            self.get_cog('General').maintenance_finish = DateParser.parse(timestr=codecs.open(dir_path + "/config/last maintenance.txt", encoding='utf-8').read())
         await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
         print(Fore.GREEN + logtime() + "Ready to serve my Master!")
         while self.is_ready():
