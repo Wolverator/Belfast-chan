@@ -222,8 +222,8 @@ class AzurLane(commands.Cog):
 
     def fix_name(self, girl_name: str):
         ship_name = girl_name.replace(' ', '_')\
-            .replace('(battleship)', '_(Battleship)') \
-            .replace('_(battleship)', '_(Battleship)') \
+            .replace('(battleship)', '_(Battleship)')\
+            .replace('_(battleship)', '_(Battleship)')\
             .replace('_battleship', '_(Battleship)')\
             .replace('_bb', '_(Battleship)')\
             .replace("mkii", "MKII")\
@@ -266,7 +266,8 @@ class AzurLane(commands.Cog):
             .replace("heart", "Heart")\
             .replace("louis", "Louis")\
             .replace("e_bel", "e_Bel")\
-            .replace("Bel-chan", "Little_Bel")\
+            .replace("Bel-chan", "Little_Bel") \
+            .replace("Hieichan", "Hiei-chan") \
             .replace("Belchan", "Little_Bel")\
             .replace("triom", "Triom")\
             .replace("bert", "Bert")\
@@ -283,7 +284,12 @@ class AzurLane(commands.Cog):
             .replace("Kizuna_ai", "Kizuna_AI")\
             .replace("gamer", "Gamer")\
             .replace("sandy", "Sandy")\
-            .replace("Hdn", "HDN")
+            .replace("Hdn", "HDN")\
+            .replace("cavour", "Cavour")\
+            .replace("george", "George")\
+            .replace("malin", "Malin")\
+            .replace("cesare", "Cesare")
+        if ship_name == "Grosse": ship_name = "Friedrich_der_Grosse"
         if ship_name == "Graf_Spee": ship_name = "Admiral_Graf_Spee"
         if ship_name == "Enterprize": ship_name = "Enterprise"
         return ship_name
