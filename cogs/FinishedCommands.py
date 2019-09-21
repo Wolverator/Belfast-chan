@@ -3,18 +3,19 @@ import codecs
 import datetime
 import os
 import time
-import dateutil
 import discord
+from dateutil.parser import parser
+
 from cogs.BelfastUtils import logtime
 from colorama import Fore
 from discord.ext import commands
 from datetime import datetime as d
 
-DateParser = dateutil.parser.parser()
+DateParser = parser()
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
 time_start = time.time()
 maintenance_remind_where_whom = {}
-maintenance_finish = DateParser.parse(timestr=codecs.open(dir_path + "config/last maintenance.txt", encoding='utf-8').read())
+maintenance_finish = None
 
 def already_in_maintenance(id: int):
     result = False
@@ -25,10 +26,11 @@ def already_in_maintenance(id: int):
 async def mt_reminder():
     global maintenance_remind_where_whom
     global maintenance_finish
-    if (maintenance_finish.timestamp() - datetime.datetime.now().timestamp()) <= 0:
-        for channel in maintenance_remind_where_whom.keys():
-            await channel.send("Maintenance of AzurLane EN server should be finished now." + maintenance_remind_where_whom.get(channel))
-        maintenance_remind_where_whom = {}
+    if maintenance_finish is not None:
+        if (maintenance_finish.timestamp() - datetime.datetime.now().timestamp()) <= 0:
+            for channel in maintenance_remind_where_whom.keys():
+                await channel.send("Maintenance of AzurLane EN server should be finished now." + maintenance_remind_where_whom.get(channel))
+            maintenance_remind_where_whom = {}
 
 class General(commands.Cog):
     def __init__(self, bot):

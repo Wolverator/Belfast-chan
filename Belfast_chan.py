@@ -1,4 +1,5 @@
 import asyncio
+import codecs
 import configparser
 import datetime
 import os
@@ -6,14 +7,18 @@ import discord
 from cogs.BelfastUtils import logtime
 from colorama import init, Fore
 from discord.ext import commands
+
+from cogs.FinishedCommands import DateParser
+
 init(autoreset=True)
-prefixes = ['Bel ', 'Belfast ', 'Belfast-chan ', 'Bel-chan ', 'Belchan ', 'bel ', 'belfast ', 'belfast-chan ', 'bel-chan ', 'belchan ']
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path)
 print("path: " + dir_path)
 description = "How can i help you, Commander?"
 config = configparser.ConfigParser()
 config.read(dir_path + "/config/config.ini")
+prefixes = config.get('Main','prefixes')
 
 cogs = ['cogs.AzurLane', 'cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.BelfastGame']
 
@@ -23,6 +28,16 @@ def get_prefix(client, message):
     if not message.guild:
         bot_prefixes = ['']
     return commands.when_mentioned_or(*bot_prefixes)(client, message)
+
+def create_if_not_exists(path_to_file_or_dir:str):
+    if path_to_file_or_dir.__contains__('.'):
+        if not os.path.exists(dir_path + path_to_file_or_dir):
+            with codecs.open(dir_path + path_to_file_or_dir, "w") as f:
+                f.flush()
+                f.close()
+    else:
+        if not os.path.exists(dir_path + path_to_file_or_dir):
+            os.mkdir(dir_path + path_to_file_or_dir)
 
 class BelfastBot(commands.Bot):
     def __init__(self):
@@ -148,6 +163,8 @@ class BelfastBot(commands.Bot):
     @commands.Cog.listener()
     async def on_ready(self):
         self.get_cog('BelfastUtils').process_guilds()
+        if os.path.getsize(dir_path + "config/last maintenance.txt") > 0:
+            self.get_cog('FinishedCommands').maintenance_finish = DateParser.parse(timestr=codecs.open(dir_path + "config/last maintenance.txt", encoding='utf-8').read())
         await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
         print(Fore.GREEN + logtime() + "Ready to serve my Master!")
         while self.is_ready():
@@ -174,4 +191,9 @@ class BelfastBot(commands.Bot):
             raise error
 
 if __name__ == '__main__':
+    create_if_not_exists("/config")
+    create_if_not_exists("/config/config.ini")
+    create_if_not_exists("/config/last maintenance.txt")
+    create_if_not_exists("/ALDB")
+    create_if_not_exists("/servers")
     BelfastBot().run(config['Main']['token'], bot=True, reconnect=True)
