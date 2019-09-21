@@ -132,8 +132,15 @@ class AzurLane(commands.Cog):
         file_i.close()
         if (dicts_info[1][1][2] == "Submarine"): Submarine = True
         web_raw = codecs.open(path_to_file, encoding='utf-8').read()
+        print("input name and faction = " + ship_name+"   "+dicts_info[1][1][1])
+        if ship_name.__contains__("Neptune") and dicts_info[1][1][1].__contains__("Royal Navy"):
+            ship_name = ship_name.replace("Neptune", "HMS Neptune")
+        elif ship_name.__contains__("Neptune") and dicts_info[1][1][1].__contains__("Neptunia"):
+            ship_name = ship_name.replace("Neptune", "HDN Neptune")
+        print("changed name = " + ship_name)
         pic_url = (web_raw.partition('<img alt="' + ship_name.replace('_', ' ') + 'Icon.png" src="')[2].partition('"')[0]).replace("'", '\%27').replace('(', '\%28').replace(')', '\%29').replace(
             "\%C3\%B6", 'ö')
+        print("pic url = "+pic_url)
         resultEmbed.set_thumbnail(url='https://azurlane.koumakan.jp/' + pic_url)
         resultEmbed.title = ship_name.replace('_', ' ')
         resultEmbed.description = str(dicts_info[0][0][0]) + ": " + str(dicts_info[0][1][0]) + "\n"
