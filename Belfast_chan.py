@@ -7,7 +7,6 @@ import discord
 from cogs.BelfastUtils import logtime
 from colorama import init, Fore
 from discord.ext import commands
-
 from cogs.FinishedCommands import DateParser
 
 init(autoreset=True)
@@ -22,6 +21,7 @@ prefixes = ['Bel ', 'Belfast ', 'Belfast-chan ', 'Bel-chan ', 'Belchan ', 'bel '
 
 cogs = ['cogs.AzurLane', 'cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.BelfastGame']
 
+
 # funcs
 def get_prefix(client, message):
     bot_prefixes = prefixes
@@ -29,7 +29,8 @@ def get_prefix(client, message):
         bot_prefixes = ['']
     return commands.when_mentioned_or(*bot_prefixes)(client, message)
 
-def create_if_not_exists(path_to_file_or_dir:str):
+
+def create_if_not_exists(path_to_file_or_dir: str):
     if path_to_file_or_dir.__contains__('.'):
         if not os.path.exists(dir_path + path_to_file_or_dir):
             with codecs.open(dir_path + path_to_file_or_dir, "w") as f:
@@ -38,6 +39,7 @@ def create_if_not_exists(path_to_file_or_dir:str):
     else:
         if not os.path.exists(dir_path + path_to_file_or_dir):
             os.mkdir(dir_path + path_to_file_or_dir)
+
 
 class BelfastBot(commands.Bot):
     def __init__(self):
@@ -48,8 +50,8 @@ class BelfastBot(commands.Bot):
         for extension in cogs:
             self.load_extension(extension)
 
-    def _user(self, id: int):
-        if id == self.owner_id:
+    def _user(self, _id: int):
+        if _id == self.owner_id:
             return "Master"
         else:
             return "Commander"
@@ -85,8 +87,8 @@ class BelfastBot(commands.Bot):
             for _reaction in reaction.message.reactions:
                 if _reaction.me:
                     emojis.append(_reaction.emoji)
-            if user != self.user and reaction.message.embeds and reaction.message.embeds[0].footer\
-                and str(reaction.message.embeds[0].footer.text) == str(user.id) and reaction.emoji in emojis:
+            if user != self.user and reaction.message.embeds and reaction.message.embeds[0].footer \
+                    and str(reaction.message.embeds[0].footer.text) == str(user.id) and reaction.emoji in emojis:
                 if reaction.emoji == "1⃣":
                     stat_type = 'base'
                 elif reaction.emoji == "2⃣":
@@ -101,7 +103,7 @@ class BelfastBot(commands.Bot):
                     return
                 try:
                     reaction.remove()
-                except:
+                except Exception:
                     ""
                 await reaction.message.edit(
                     embed=self.get_cog('AzurLane').update_embed(reaction.message.embeds[0], stat_type))
@@ -117,7 +119,7 @@ class BelfastBot(commands.Bot):
                     "Hello there, Commanders!\nThanks for inviting me to your guild :wink:\nType 'Bel help' to see list "
                     "of available commands.\nAlso make sure you have 'belfast-chan-news' text channel to receive news from "
                     "my Master considering my online schedule or development!")
-            except:
+            except Exception:
                 ""
         try:
             path = dir_path + "/servers/" + str(guild.id)
@@ -189,6 +191,7 @@ class BelfastBot(commands.Bot):
             await asyncio.sleep(35)
             await msg.delete()
             raise error
+
 
 if __name__ == '__main__':
     create_if_not_exists("/config")

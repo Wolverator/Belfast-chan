@@ -14,7 +14,9 @@ from discord.utils import find
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
 time_start = time.time()
 
+
 def logtime(): return str(datetime.datetime.now().time()).partition('.')[0] + " "
+
 
 class BelfastUtils(commands.Cog):
     def __init__(self, bot):
@@ -45,24 +47,21 @@ class BelfastUtils(commands.Cog):
             except OSError:
                 print(logtime() + "Создать директорию %s не удалось" % path)
 
-    def get_user(self, guild:discord.Guild, some_user:str):
+    def get_user(self, guild: discord.Guild, some_user: str):
         user = find(lambda m: m.name == some_user, guild.members)
-        if user is None: user = find(lambda m: m.display_name == some_user, guild.members)
-        if user is None: user = find(lambda m: str(m) == some_user, guild.members)
-        if user is None and some_user.strip("@<>!").isdigit(): user = find(lambda m: m.id == int(some_user.strip("@<>!")), guild.members)
+        if user is None:
+            user = find(lambda m: m.display_name == some_user, guild.members)
+        if user is None:
+            user = find(lambda m: str(m) == some_user, guild.members)
+        if user is None and some_user.strip("@<>!").isdigit():
+            user = find(lambda m: m.id == int(some_user.strip("@<>!")), guild.members)
         return user
-
-    def user(self, id: int):
-        if id == self.bot.owner_id:
-            return "Master"
-        else:
-            return "Commander"
 
     @commands.command(pass_context=True, aliases=['ava', 'mypp'], brief="Show your or other user's avatar")
     @commands.guild_only()
-    async def avatar(self, ctx, *, some_user: str):
+    async def avatar(self, ctx, *, some_user="placeholderLVL99999"):
         await ctx.channel.trigger_typing()
-        if not some_user:
+        if some_user == "placeholderLVL99999":
             some_user = ctx.author.id
         user = self.get_user(ctx.guild, some_user)
         if user is not None:
@@ -71,7 +70,7 @@ class BelfastUtils(commands.Cog):
             resultEmbed.set_image(url=user.avatar_url)
             await ctx.send(embed=resultEmbed)
         else:
-            await ctx.send("I am sorry, " + self.user(ctx.author.id) + "!\nUser with predicate **" + some_user + "** not found on this server.")
+            await ctx.send("I am sorry, " + self.bot._user(ctx.author.id) + "!\nUser with predicate **" + some_user + "** not found on this server.")
 
     @commands.command(pass_context=True, hidden=True)
     async def stats(self, ctx):
@@ -113,7 +112,8 @@ class BelfastUtils(commands.Cog):
     async def bots(self, ctx):
         text = ""
         for member in self.bot.users:
-            if member.bot: text += str(member) + "\n"
+            if member.bot:
+                text += str(member) + "\n"
         msg = await ctx.send("```" + text + "```")
         await asyncio.sleep(15)
         await msg.delete()
@@ -123,10 +123,12 @@ class BelfastUtils(commands.Cog):
     async def users(self, ctx):
         text = ""
         for member in self.bot.users:
-            if not member.bot: text += str(member) + "\n"
+            if not member.bot:
+                text += str(member) + "\n"
         msg = await ctx.send("```" + text + "```")
         await asyncio.sleep(15)
         await msg.delete()
+
 
 def scan_dir(path):
     count = 0
@@ -145,6 +147,7 @@ def scan_dir(path):
             code_lines += c_l
             size += s
     return count, code_lines, size
+
 
 def setup(bot):
     bot.add_cog(BelfastUtils(bot))
