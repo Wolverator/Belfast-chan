@@ -62,7 +62,7 @@ class BelfastUtils(commands.Cog):
     async def avatar(self, ctx, *, some_user="placeholderLVL99999"):
         await ctx.channel.trigger_typing()
         if some_user == "placeholderLVL99999":
-            some_user = ctx.author.id
+            some_user = str(ctx.author.id)
         user = self.get_user(ctx.guild, some_user)
         if user is not None:
             resultEmbed = discord.Embed()

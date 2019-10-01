@@ -146,7 +146,7 @@ class General(commands.Cog):
         await asyncio.sleep(25)
         await msg.delete()
 
-    @commands.command(pass_context=True, brief="[owner-only]Set time for maintenance end", hidden=True)
+    @commands.command(pass_context=True, aliases=['set_mt', 'setmt'], brief="[owner-only]Set time for maintenance end", hidden=True)
     @commands.is_owner()
     async def set_maintenance(self, ctx, *, maintenance_time: str):
         global maintenance_finish

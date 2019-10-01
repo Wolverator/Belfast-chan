@@ -23,7 +23,7 @@ class AzurLane(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(pass_context=True, aliases=['girl', 'ship'], brief="Show girl's info from official Wiki")
+    @commands.command(pass_context=True, aliases=['ship'], brief="Show girl's info from official Wiki")
     async def info(self, ctx, *, girl_name="placeholderLVL99999"):
         await ctx.channel.trigger_typing()
         # noinspection PyArgumentList
