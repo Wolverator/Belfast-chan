@@ -1,13 +1,10 @@
 import asyncio
-import codecs
-import configparser
 import datetime
 import os
 import time
 from platform import python_version
 
 import discord
-from colorama import Fore
 from discord.ext import commands
 from discord.utils import find
 
@@ -22,32 +19,7 @@ class BelfastUtils(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def process_guilds(self):
-        for guild in self.bot.guilds:
-            guild_conf = configparser.ConfigParser()
-            print(logtime() + "Guild connected: " + Fore.GREEN + guild.name)
-            guild_conf.add_section(str(guild.id))
-            guild_conf.set(str(guild.id), "Name", guild.name)
-            guild_conf.add_section("Roles")
-            for Role in guild.roles:
-                guild_conf.set("Roles", str(Role.id), str(Role.name))
-            guild_conf.add_section("Channels")
-            for Channel in guild.channels:
-                guild_conf.set("Channels", str(Channel.id), str(Channel.name))
-            guild_conf.add_section("Members")
-            for Member in guild.members:
-                guild_conf.set("Members", str(Member.id), str(Member))
-            with codecs.open(dir_path + "config/" + str(guild.id) + ".ini", mode="w", encoding="utf-8") as guild_file:
-                guild_conf.write(guild_file)
-            path = dir_path + "servers/" + str(guild.id)
-            try:
-                if not os.path.exists(path):
-                    os.mkdir(path)
-                    print(logtime() + "Успешно создана директория %s " % path)
-            except OSError:
-                print(logtime() + "Создать директорию %s не удалось" % path)
-
-    def get_user(self, guild: discord.Guild, some_user: str):
+    def get_user(self, guild: discord.Guild, some_user: str) -> discord.User:
         user = find(lambda m: m.name == some_user, guild.members)
         if user is None:
             user = find(lambda m: m.display_name == some_user, guild.members)

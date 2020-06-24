@@ -38,12 +38,8 @@ async def mt_reminder():
 
 
 class General(commands.Cog):
-    global maintenance_finish
-
     def __init__(self, bot):
         self.bot = bot
-        if os.path.getsize(dir_path + "/config/last maintenance.txt") > 0:
-            maintenance_finish = DateParser.parse(timestr=codecs.open(dir_path + "/config/last maintenance.txt", encoding='utf-8').read())
 
     @commands.command(pass_context=True, aliases=['hey', 'hello', 'hello?', 'answer'], hidden=True)
     async def test(self, ctx):
@@ -108,6 +104,8 @@ class General(commands.Cog):
     async def add_mt_reminder_for(self, ctx, user_id: int):
         global maintenance_remind_where_whom
         global maintenance_finish
+        if ctx.message.mentions:
+            user_id = ctx.message.mentions.pop(0).id
         time_left = datetime.timedelta(
             seconds=(maintenance_finish.timestamp() - datetime.datetime.now().timestamp()))
         if time_left.total_seconds() >= 0:
@@ -129,9 +127,11 @@ class General(commands.Cog):
         await msg.delete()
 
     @commands.command(pass_context=True, aliases=['mt'], brief="Check when servers will be back online")
-    async def maintenance(self, ctx):
+    async def maintenance(self, ctx):  # TODO: move users to remind mt end about also into file and load that list at start-up
         global maintenance_remind_where_whom
         global maintenance_finish
+        if os.path.getsize(dir_path + "/config/last maintenance.txt") > 0:
+            maintenance_finish = DateParser.parse(timestr=codecs.open(dir_path + "/config/last maintenance.txt", encoding='utf-8').read())
         if maintenance_finish:
             time_left = datetime.timedelta(
                 seconds=(maintenance_finish.timestamp() - datetime.datetime.now().timestamp()))
@@ -152,6 +152,7 @@ class General(commands.Cog):
                        + "\nPrevious maintenance was finished: " + str(maintenance_finish) + " (UTC +3)"
         else:
             text = "Sorry, Commander, but there's no info about nor previous, neither incoming maintenances!"
+            text += str(os.path.getsize(dir_path + "/config/last maintenance.txt"))
         msg = await ctx.send(text)
         await asyncio.sleep(25)
         await msg.delete()

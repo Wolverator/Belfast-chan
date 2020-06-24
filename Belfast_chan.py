@@ -11,7 +11,6 @@ from colorama import init, Fore
 from discord.ext import commands
 
 from cogs.BelfastUtils import logtime
-from cogs.Bingo import servers_with_games
 
 init(autoreset=True)
 
@@ -24,7 +23,7 @@ config = configparser.ConfigParser()
 config.read(dir_path + "/config/config.ini")
 prefixes = ['Bel ', 'Belfast ', 'Belfast-chan ', 'Bel-chan ', 'Belchan ', 'bel ', 'belfast ', 'belfast-chan ', 'bel-chan ', 'belchan ']
 
-cogs = ['cogs.AzurLane', 'cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.BelfastGame', 'cogs.Bingo']
+cogs = ['cogs.AzurLane', 'cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.BelfastGame']
 
 
 # funcs
@@ -54,6 +53,31 @@ class BelfastBot(commands.Bot):
         self.TigersMeadow = self.get_guild(566171342953512963)
         for extension in cogs:
             self.load_extension(extension)
+
+    def process_guilds(self):
+        for guild in self.guilds:
+            guild_conf = configparser.ConfigParser()
+            print(logtime() + "Guild connected: " + Fore.GREEN + guild.name)
+            guild_conf.add_section(str(guild.id))
+            guild_conf.set(str(guild.id), "Name", guild.name)
+            guild_conf.add_section("Roles")
+            for Role in guild.roles:
+                guild_conf.set("Roles", str(Role.id), str(Role.name))
+            guild_conf.add_section("Channels")
+            for Channel in guild.channels:
+                guild_conf.set("Channels", str(Channel.id), str(Channel.name))
+            guild_conf.add_section("Members")
+            for Member in guild.members:
+                guild_conf.set("Members", str(Member.id), str(Member))
+            with codecs.open(dir_path + "/config/" + str(guild.id) + ".ini", mode="w", encoding="utf-8") as guild_file:
+                guild_conf.write(guild_file)
+            path = dir_path + "/servers/" + str(guild.id)
+            try:
+                if not os.path.exists(path):
+                    os.mkdir(path)
+                    print(logtime() + "Успешно создана директория %s " % path)
+            except OSError:
+                print(logtime() + "Создать директорию %s не удалось" % path)
 
     def _user(self, _id: int):
         if _id == self.owner_id:
@@ -114,22 +138,10 @@ class BelfastBot(commands.Bot):
                     embed=self.get_cog('AzurLane').update_embed(reaction.message.embeds[0], stat_type))
             print(user.name + " reacted with " + str(reaction.emoji))
 
-            print("1" + str(user != self.user))
-            print("2" + str(reaction.emoji.id) + "///" + str(reaction.emoji.id == "<:AL:569511684650041364>"))
-            print("3" + str(reaction.message.content.find("Azure Lane Bingo") != (-1)))
-            print("4" + str(servers_with_games[reaction.message.guild.id].count(user.id) == 0))
-
-            if user != self.user and str(reaction.emoji.id) == "569511684650041364" \
-                    and reaction.message.content.find("Azure Lane Bingo") != (-1) \
-                    and servers_with_games[reaction.message.guild.id].count(user.id) == 0:
-                print(user.name + " reacted with " + str(reaction.emoji) + " and added to Bingo Game")
-                servers_with_games[reaction.message.guild.id].append(user.id)
-                await reaction.message.channel.send(user.name + " was added to upcoming game!")
-
     # guild events
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        self.get_cog('BelfastUtils').process_guilds()
+        self.process_guilds()
         print(logtime() + Fore.CYAN + "New guild connected: " + Fore.GREEN + guild.name)
         if guild.system_channel is not None:
             try:
@@ -151,12 +163,12 @@ class BelfastBot(commands.Bot):
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
-        self.get_cog('BelfastUtils').process_guilds()
+        self.process_guilds()
         print(logtime() + Fore.YELLOW + "Guild lost: " + Fore.CYAN + guild.name)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        self.get_cog('BelfastUtils').process_guilds()
+        self.process_guilds()
         print(logtime() + Fore.CYAN + "New member " + Fore.GREEN + str(
             member) + Fore.CYAN + " has joined guild: " + Fore.GREEN + member.guild.name)
         if member.guild == self.TigersMeadow:
@@ -165,7 +177,7 @@ class BelfastBot(commands.Bot):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         if member != self.user:
-            self.get_cog('BelfastUtils').process_guilds()
+            self.process_guilds()
             print(logtime() + Fore.YELLOW + "Member " + Fore.CYAN + str(
                 member) + Fore.YELLOW + " has left guild: " + Fore.CYAN + member.guild.name)
 
@@ -187,7 +199,7 @@ class BelfastBot(commands.Bot):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.get_cog('BelfastUtils').process_guilds()
+        self.process_guilds()
         await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
         print(Fore.GREEN + logtime() + "Ready to serve my Master!")
         while self.is_ready():
@@ -208,7 +220,7 @@ class BelfastBot(commands.Bot):
             await msg.delete()
             return
         else:
-            error_log = str(type(error)) + "\n========================" + ''.join(traceback.format_tb(error.__traceback__))
+            error_log = str(type(error)) + "\n========================" + str(error) + "\n========================" + ''.join(traceback.format_tb(error.__traceback__))
             for arg in error.args:
                 error_log += "-arg- = " + arg + "\n"
             text = "Encountered an error, gathering data...\n"
@@ -220,11 +232,12 @@ class BelfastBot(commands.Bot):
                 output_file.write(text + "\n\n" + str(error_log) + "\n")
                 output_file.close()
             text += "Error log created: " + filename
-            msg = await ctx.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:", description=text))
+            msg = await ctx.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:", description=text + "\n" + str(error)))
             owner = await self.fetch_user(self.owner_id)
-            await owner.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:", description=text))
-            await asyncio.sleep(25)
+            # await owner.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:", description=text))
+            await asyncio.sleep(1)
             await msg.delete()
+            raise error
 
 
 if __name__ == '__main__':
@@ -236,6 +249,7 @@ if __name__ == '__main__':
     create_if_not_exists("/servers")
     create_if_not_exists("/suggests")
     create_if_not_exists("/users")
+    create_if_not_exists("/battle_logs")
     create_if_not_exists("/logs")
     create_if_not_exists("/error_logs")
 

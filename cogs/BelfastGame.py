@@ -3,6 +3,7 @@ import codecs
 import configparser
 import os
 import random
+import time
 
 import discord
 import pandas
@@ -17,6 +18,7 @@ build_cost = 100
 
 
 class BattleGirl(object):
+    id = 0
     name = ""
     pic = ""
     rarity = ""
@@ -33,7 +35,11 @@ class BattleGirl(object):
     accuracy = 0
     evasion = 0
 
+    def __str__(self):
+        return str(str(self.id) + "=" + self.name + "=" + str(self.health))
+
     def __init__(self, girl_config):
+        self.id = int(girl_config.get('main', 'id'))
         self.name = girl_config.get('main', 'name')
         self.pic = girl_config.get('main', 'pic')
         self.rarity = girl_config.get('main', 'rarity')
@@ -59,26 +65,35 @@ class BattleGirl(object):
             dmg = int(dmg * 1.2)
         if self.classification == "Battlecruiser" or self.classification == "Battleship":
             dmg = int(dmg * 2)
+        previous_health = enemy.health
         enemy.health = enemy.health - dmg
-        return str(self.name + " fired shells at " + enemy.name + " with " + str(dmg) + " damage dealt!\n")
+        return str(self.name + "(ID:" + str(self.id) + ") fired shells at " + enemy.name + "(" + str(previous_health) + "hp) dealing " + str(dmg) + "dmg. New " + enemy.name + "'s health=" + str(
+            enemy.health) + "\n")
 
     def launch_torps(self, enemy):
-        dmg = int((self.accuracy / enemy.evasion) * self.torpedo)
+        dmg = int((self.accuracy / (enemy.evasion * 1.5)) * self.torpedo)
         dmg = randomize(dmg)
         if enemy.classification == "Submarine":
             dmg = int(dmg / 5)
         if enemy.classification == "Destroyer":
             dmg = int(dmg / 2)
+        if self.classification == "Destroyer" or self.classification == "Submarine":
+            dmg = int(dmg * 2)
+        previous_health = enemy.health
         enemy.health = enemy.health - dmg
-        return str(self.name + " launched torps at " + enemy.name + " with " + str(dmg) + " damage dealt!\n")
+        return str(self.name + "(ID:" + str(self.id) + ") send torps at " + enemy.name + "(" + str(previous_health) + "hp) dealing " + str(dmg) + "dmg. New " + enemy.name + "'s health=" + str(
+            enemy.health) + "\n")
 
     def aviation_attack(self, enemy):
         dmg = int((self.aviation * 6 / (1 + enemy.antiair)) * self.aviation)
         dmg = randomize(dmg)
         if enemy.classification == "Submarine":
             dmg = int(dmg / 10)
+        previous_health = enemy.health
         enemy.health = enemy.health - dmg
-        return str(self.name + " attacked " + enemy.name + " using planes with " + str(dmg) + " damage dealt!\n")
+        return str(
+            self.name + "(ID:" + str(self.id) + ") launched aviastrike at " + enemy.name + "(" + str(previous_health) + "hp) dealing " + str(dmg) + "dmg. New " + enemy.name + "'s health=" + str(
+                enemy.health) + "\n")
 
 
 class BelfastGame(commands.Cog):
@@ -87,26 +102,33 @@ class BelfastGame(commands.Cog):
 
     @commands.command(pass_context=True, brief="Duel another player at same server")
     async def duel(self, ctx, *, user_to_duel="placeholderLVL9999999"):
-        if user_to_duel != "placeholderLVL9999999":
-            user = self.bot.get_cog("BelfastUtils").get_user(ctx.guild, user_to_duel)
-            if user is not None:
-                if get_profile(ctx.author.id):
-                    if get_harem_size(ctx.author.id) and get_harem_size(ctx.author.id) > 0:
-                        if get_profile(user.id):
-                            if get_harem_size(user.id) and get_harem_size(user.id) > 0:
-                                await ctx.send("Battle replacer")
+        try:
+            if ctx.message.mentions:
+                user_to_duel = ctx.message.mentions.pop(0).id
+            author_id = ctx.author.id
+            if user_to_duel != "placeholderLVL9999999":
+                user = self.bot.get_cog("BelfastUtils").get_user(ctx.guild, str(user_to_duel))
+                if user is not None:
+                    if get_profile(author_id):
+                        if get_harem_size(author_id) and get_harem_size(author_id) > 0:
+                            if get_profile(user.id):
+                                if get_harem_size(user.id) and get_harem_size(user.id) > 0:
+                                    result = self.duel2players(author_id, user.id)
+                                    await ctx.send(file=discord.File(fp=result['filename'], filename="battle_log.log"), embed=result['embed'])
+                                else:
+                                    await ctx.send("I am sorry, " + self.bot._user(author_id) + "!\nBut this Commander have no girls to battle with yet!")
                             else:
-                                await ctx.send("I am sorry, " + self.bot._user(ctx.author.id) + "!\nBut this Commander have no girls to battle with yet!")
+                                await ctx.send("I am sorry, " + self.bot._user(author_id) + "!\nBut this Commander doesn't play this game yet (have no profile)!")
                         else:
-                            await ctx.send("I am sorry, " + self.bot._user(ctx.author.id) + "!\nBut this Commander doesn't play this game yet (have no profile)!")
+                            await ctx.send("I am sorry, " + self.bot._user(author_id) + "!\nBut you have no girls to battle with yet! Build some with ``Bel build``")
                     else:
-                        await ctx.send("I am sorry, " + self.bot._user(ctx.author.id) + "!\nBut you have no girls to battle with yet! Build some with ``Bel build``")
+                        await ctx.send("I am sorry, " + self.bot._user(author_id) + "!\nBut you have no profile yet. Create one with ``Bel new``")
                 else:
-                    await ctx.send("I am sorry, " + self.bot._user(ctx.author.id) + "!\nBut you have no profile yet. Create one with ``Bel new``")
+                    await ctx.send("I am sorry, " + self.bot._user(author_id) + "!\nCommander with predicate **" + user_to_duel + "** not found on this server.")
             else:
-                await ctx.send("I am sorry, " + self.bot._user(ctx.author.id) + "!\nCommander with predicate **" + user_to_duel + "** not found on this server.")
-        else:
-            await ctx.send("I am sorry, " + self.bot._user(ctx.author.id) + "!\nBut it seems like you forgot to choose a player you wanna duel.")
+                await ctx.send("I am sorry, " + self.bot._user(author_id) + "!\nBut it seems like you forgot to choose a player you wanna duel.")
+        except Exception:
+            raise
 
     @commands.command(pass_context=True, brief="Battle 2 girls in test mode")
     async def battle(self, ctx, girl1_id="placeholderLVL9999999", girl2_id="placeholderLVL9999999"):
@@ -135,21 +157,144 @@ class BelfastGame(commands.Cog):
         else:
             await ctx.send("I am sorry, " + self.bot._user(ctx.author.id) + "!\nBut you have no profile yet. Create one with ``Bel new``")
 
+    def duel2players(self, user1id: int, user2id: int):
+        battle_log = ""
+        res_log = ""
+
+        battle_time = 1
+        user1 = self.bot.get_user(user1id)
+        user2 = self.bot.get_user(user2id)
+        fleet1 = {}
+        fleet2 = {}
+        embed = discord.Embed()
+        embedtitle = user1.display_name + " fleet VS " + user2.display_name + " fleet!"
+        battle_log += embedtitle + "\n"
+        user1team = ""
+        user2team = ""
+
+        for i in range(get_harem_size(user1id)):
+            fleet1[i + 1] = get_harem_girl_by_id(user1id, i + 1)
+            user1team += fleet1[i + 1].name
+        embed.add_field(name=user1.display_name + " girls:", value=user1team)
+
+        battle_log += user1.display_name + " girls:" + user1team + "\n"
+
+        for i in range(get_harem_size(user2id)):
+            fleet2[i + 1] = get_harem_girl_by_id(user2id, i + 1)
+            user2team += fleet2[i + 1].name
+        embed.add_field(name=user2.display_name + " girls:", value=user2team)
+
+        battle_log += user2.display_name + " girls:" + user2team + "\n"
+
+        R = random.Random()
+        fleet1alive = len(fleet1)
+        fleet2alive = len(fleet2)
+        while fleet1alive > 0 and fleet2alive > 0:
+            fleet1alive = 0
+            fleet2alive = 0
+
+            for girl in fleet1.values():
+                if girl and girl.health > 0:
+                    # battle_log+="fleet1-"+str(girl)+"\n"
+                    if girl.firepower > 0 and (battle_time % (100 - girl.reload) == 0):
+                        gid = self.get_random_girl_alive_id(fleet2)
+                        if gid > 0:
+                            # print(logtime()+str(battle_time)+"s: "+girl.name+" fire")
+                            battle_log += str(battle_time) + "s, team " + user1.display_name + ": " + girl.fire_shells(fleet2[gid])
+                    if girl.torpedo > 0 and (battle_time % (200 - (girl.reload * 2)) == 0):
+                        gid = self.get_random_girl_alive_id(fleet2)
+                        if gid > 0:
+                            # print(logtime()+str(battle_time)+"s: "+girl.name+" torp")
+                            battle_log += str(battle_time) + "s, team " + user1.display_name + ": " + girl.launch_torps(fleet2[gid])
+                    if girl.aviation > 0 and (battle_time % (200 - (girl.reload * 2)) == 0):
+                        gid = self.get_random_girl_alive_id(fleet2)
+                        if gid > 0:
+                            # print(logtime()+str(battle_time)+"s: "+girl.name+" avi")
+                            battle_log += str(battle_time) + "s, team " + user1.display_name + ": " + girl.aviation_attack(fleet2[gid])
+
+            for girl in fleet2.values():
+                if girl and girl.health > 0:
+                    # battle_log+="\nfleet2-"+str(girl)+"\n"
+                    if girl.firepower > 0 and (battle_time % (100 - girl.reload) == 0):
+                        gid = self.get_random_girl_alive_id(fleet1)
+                        if gid > 0:
+                            # print(logtime()+str(battle_time)+"s: "+girl.name+" fire")
+                            battle_log += str(battle_time) + "s, team " + user2.display_name + ": " + girl.fire_shells(fleet1[gid])
+                    if girl.torpedo > 0 and (battle_time % (200 - (girl.reload * 2)) == 0):
+                        gid = self.get_random_girl_alive_id(fleet1)
+                        if gid > 0:
+                            # print(logtime()+str(battle_time)+"s: "+girl.name+" torp")
+                            battle_log += str(battle_time) + "s, team " + user2.display_name + ": " + girl.launch_torps(fleet1[gid])
+                    if girl.aviation > 0 and (battle_time % (200 - (girl.reload * 2)) == 0):
+                        gid = self.get_random_girl_alive_id(fleet1)
+                        if gid > 0:
+                            # print(logtime()+str(battle_time)+"s: "+girl.name+" avi")
+                            battle_log += str(battle_time) + "s, team " + user2.display_name + ": " + girl.aviation_attack(fleet1[gid])
+            for girl in fleet1.values():
+                if girl and girl.health > 0:
+                    fleet1alive += 1
+            for girl in fleet2.values():
+                if girl and girl.health > 0:
+                    fleet2alive += 1
+            battle_time += 1
+
+        battle_log_name = dir_path.replace("users/", "") + "battle_logs/" + str(user1id) + "_vs_" + str(user2id) + "_" + str(time.time()).partition('.')[0] + ".log"
+        with codecs.open(battle_log_name, mode="w", encoding="utf-8") as battle_log_file:
+            battle_log_file.write(battle_log)
+
+        res_log += "\n**Results**\n"
+        res_log += user1.display_name + " team:\n"
+        for girl in fleet1.values():
+            res_log += str(girl.id) + ") " + girl.name + " (" + str(girl.health) + " hp)\n"
+        res_log += user2.display_name + " team:\n"
+        for girl in fleet2.values():
+            res_log += str(girl.id) + ") " + girl.name + " (" + str(girl.health) + " hp)\n"
+
+        if fleet1alive > 0:
+            color = discord.Colour.green()
+            url = user1.avatar_url
+        else:
+            color = discord.Colour.red()
+            url = user2.avatar_url
+        winner = get_profile(user1id)
+        winner.set('Profile', 'PvP_wins', str(1 + int(winner.get('Profile', 'PvP_wins'))))
+        save_profile(user1id, winner)
+        looser = get_profile(user2id)
+        looser.set('Profile', 'PvP_loses', str(1 + int(looser.get('Profile', 'PvP_loses'))))
+        save_profile(user2id, looser)
+
+        return {'filename': battle_log_name, 'embed': discord.Embed(title=embedtitle, description=res_log, color=color) \
+            .set_thumbnail(url=url) \
+            .set_footer(icon_url=user1.avatar_url, text=user1.display_name)}
+
+    def get_random_girl_alive_id(self, fleet: dict):
+        R = random.Random()
+        temp_fleet = {}
+        for g in fleet.values():
+            if g.health > 0:
+                temp_fleet[g.id] = int(g.id)
+        number = -1
+        # print(str(temp_fleet))
+        while number not in temp_fleet.values() and len(temp_fleet) > 0:
+            number = R.randint(0, len(fleet))
+            # print(str(temp_fleet)+"----"+str(number))
+        return number
+
     def battle2girls(self, girl1: BattleGirl, girl2: BattleGirl):
         battle_log = ""
         time = 1
         while girl1.health > 0 and girl2.health > 0:
-            if girl1.health > 0 and girl1.firepower > 0 and (time % (100 - randomize(girl1.reload)) == 0):
+            if girl1.health > 0 and girl1.firepower > 0 and (time % (100 - girl1.reload) == 0):
                 battle_log += str(time) + "s: " + girl1.fire_shells(girl2)
-            if girl2.health > 0 and girl2.firepower > 0 and (time % (100 - randomize(girl2.reload)) == 0):
+            if girl2.health > 0 and girl2.firepower > 0 and (time % (100 - girl2.reload) == 0):
                 battle_log += str(time) + "s: " + girl2.fire_shells(girl1)
-            if girl1.health > 0 and girl1.torpedo > 0 and (time % (200 - (randomize(girl1.reload) * 2)) == 0):
+            if girl1.health > 0 and girl1.torpedo > 0 and (time % (200 - (girl1.reload * 2)) == 0):
                 battle_log += str(time) + "s: " + girl1.launch_torps(girl2)
-            if girl2.health > 0 and girl2.torpedo > 0 and (time % (200 - (randomize(girl2.reload) * 2)) == 0):
+            if girl2.health > 0 and girl2.torpedo > 0 and (time % (200 - (girl2.reload * 2)) == 0):
                 battle_log += str(time) + "s: " + girl2.launch_torps(girl1)
-            if girl1.health > 0 and girl1.aviation > 0 and (time % (200 - (randomize(girl1.reload) * 2)) == 0):
+            if girl1.health > 0 and girl1.aviation > 0 and (time % (200 - (girl1.reload * 2)) == 0):
                 battle_log += str(time) + "s: " + girl1.aviation_attack(girl2)
-            if girl2.health > 0 and girl2.aviation > 0 and (time % (200 - (randomize(girl2.reload) * 2)) == 0):
+            if girl2.health > 0 and girl2.aviation > 0 and (time % (200 - (girl2.reload * 2)) == 0):
                 battle_log += str(time) + "s: " + girl2.aviation_attack(girl1)
             time += 1
         battle_log += girl1.name + " finished battle with " + str(girl1.health) + " HP while " + girl2.name + " finished battle with " + str(girl2.health) + " HP!"
@@ -157,6 +302,7 @@ class BelfastGame(commands.Cog):
 
     @commands.command(pass_context=True, brief="Build random ship for money")
     async def build(self, ctx, times=1):
+        await ctx.channel.trigger_typing()
         profile = get_profile(ctx.author.id)
         if profile:
             money = int(profile.get('Profile', 'Money'))
@@ -181,7 +327,8 @@ class BelfastGame(commands.Cog):
         self.bot.get_cog("AzurLane").update_html_file(path_to_html_file, _url)
         ships = pandas.read_html(path_to_html_file)
         R = random.Random()
-        allowed_nations = ['Eagle Union', 'Royal Navy', 'Sakura Empire', 'Ironblood', 'Eastern Radiance', 'North Union']
+        allowed_nations = ['Eagle Union', 'Royal Navy', 'Sakura Empire', 'Ironblood', 'Eastern Radiance', 'North Union', 'Iris Libre', 'Vichya Dominion', 'Sardegna Empire',
+                           'Bilibili', 'Neptunia', 'Utawarerumono', 'KizunaAI', 'Kizuna AI', 'Hololive', 'Siren']
         category = random.choices(['Normal', 'Rare', 'Elite', 'Super Rare'], [15, 7, 3, 1])
         if category[0] is 'Normal':
             color = discord.Color.lighter_grey()
@@ -222,9 +369,10 @@ class BelfastGame(commands.Cog):
                                                                                                                                                                                          'ö')
         # noinspection PyUnusedLocal
         waifu_number = 1 + sum(1 for f in os.listdir(dir_path + str(_user.id)))
+        girl = configparser.ConfigParser()
         try:
-            girl = configparser.ConfigParser()
             girl.add_section('main')
+            girl.set('main', 'id', str(waifu_number))
             girl.set('main', 'name', rolled_girl_name)
             girl.set('main', 'pic', pic_url)
             girl.set('main', "Rarity", category[0])
@@ -260,22 +408,23 @@ class BelfastGame(commands.Cog):
     async def mygirl(self, ctx, *, girl_id="-"):
         await ctx.channel.trigger_typing()
         if girl_id.isdigit():
-            if int(girl_id) > 0 and int(girl_id) <= get_harem_size(ctx.author.id):
+            if 0 < int(girl_id) <= get_harem_size(ctx.author.id):
                 girl = get_harem_girl_by_id(ctx.author.id, int(girl_id))
                 resultEmbed = discord.Embed()
                 resultEmbed.title = girl.name
                 resultEmbed.set_thumbnail(url=girl.pic)
 
+                resultEmbed.add_field(name="Id", value=str(girl.id))
                 resultEmbed.add_field(name="Rarity", value=girl.rarity)
-                resultEmbed.add_field(name="Nationality", value=girl.nationality, inline=False)
+                resultEmbed.add_field(name="Nationality", value=girl.nationality, )
                 resultEmbed.add_field(name="Classification", value=girl.classification)
                 resultEmbed.add_field(name="Level", value=str(girl.level))
                 resultEmbed.add_field(name="Exp", value=str(girl.exp))
-                resultEmbed.add_field(name="Health", value=str(girl.health), inline=False)
+                resultEmbed.add_field(name="Health", value=str(girl.health))
                 resultEmbed.add_field(name="Firepower", value=str(girl.firepower))
                 resultEmbed.add_field(name="Anti-air", value=str(girl.antiair))
                 resultEmbed.add_field(name="Torpedo", value=str(girl.torpedo))
-                resultEmbed.add_field(name="Aviation", value=str(girl.aviation), inline=False)
+                resultEmbed.add_field(name="Aviation", value=str(girl.aviation))
                 resultEmbed.add_field(name="Reload", value=str(girl.reload))
                 resultEmbed.add_field(name="Accuracy", value=str(girl.accuracy))
                 resultEmbed.add_field(name="Evasion", value=str(girl.evasion))
@@ -293,25 +442,33 @@ class BelfastGame(commands.Cog):
             await ctx.send(embed=resultEmbed)
 
     @commands.command(pass_context=True, aliases=['p'], brief="Show Commander's profile")
-    async def profile(self, ctx):
+    async def profile(self, ctx, *, user="placeholderLVL9999999"):
         await ctx.channel.trigger_typing()
-        if not get_profile(ctx.author.id):
-            await ctx.send(":no_entry: Sorry, Commander!\nBut you have no profile yet. Create one with ``Bel new``")
+        if user is "placeholderLVL9999999":
+            if not get_profile(ctx.author.id):
+                await ctx.send(":no_entry: Sorry, Commander!\nBut you have no profile yet. Create one with ``Bel new``")
+            else:
+                await ctx.send(embed=self.show_profile(ctx.author))
         else:
-            await ctx.send(embed=self.show_profile(ctx))
+            user = self.bot.get_cog("BelfastUtils").get_user(ctx.guild, user)
+            if not get_profile(user.id):
+                await ctx.send(":no_entry: Sorry, Commander!\nBut you have no profile yet. Create one with ``Bel new``")
+            else:
+                await ctx.send(embed=self.show_profile(user))
 
-    def show_profile(self, ctx):
+    def show_profile(self, user: discord.User):
         resultEmbed = discord.Embed()
-        profile = get_profile(ctx.author.id)
+        profile = get_profile(user.id)
 
-        resultEmbed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
+        resultEmbed.set_author(name=str(user), icon_url=user.avatar_url)
         resultEmbed.title = profile.get('Profile', 'Nickname')
         text = "**Level:** " + profile.get('Profile', 'Level')
         text += "\n**Exp:** " + profile.get('Profile', 'Exp')
         text += "\n**Money:** " + profile.get('Profile', 'Money')
         text += "\n**PvP wins:** " + profile.get('Profile', 'PvP_wins')
+        text += "\n**PvP loses:** " + profile.get('Profile', 'PvP_loses')
         # noinspection PyUnusedLocal
-        text += "\n**Harem:** " + str(get_harem_size(ctx.author.id))
+        text += "\n**Harem:** " + str(get_harem_size(user.id))
 
         resultEmbed.description = text
         profile.clear()
@@ -389,6 +546,7 @@ class BelfastGame(commands.Cog):
             user_conf.set('Profile', 'Exp', '0')
             user_conf.set('Profile', 'Money', '1000')
             user_conf.set('Profile', 'PvP_wins', '0')
+            user_conf.set('Profile', 'PvP_loses', '0')
             with codecs.open(user_path, mode="w", encoding="utf-8") as user_file:
                 user_conf.write(user_file)
             await ask.delete()
@@ -408,10 +566,12 @@ def clear_folder(string: str):
     for name1 in os.listdir(string):
         name = string + name1
         print(name)
-        if os.path.isdir(name):
+        if os.path.isdir(name) and not name.endswith("568914197048459273") and not name.endswith("624990745132138496"):
             count += clear_folder(name + '/')
             os.rmdir(os.path.abspath(name))
-        if os.path.isfile(name):
+        if os.path.isfile(name) \
+                and not name.endswith("568914197048459273/1.ini") and not name.endswith("624990745132138496/1.ini") \
+                and not name.endswith("568914197048459273.ini") and not name.endswith("624990745132138496.ini"):
             os.remove(os.path.abspath(name))
             count += 1
     return count
@@ -436,13 +596,12 @@ def save_profile(user_id: int, profile):
         profile.write(user_file)
 
 
-def get_harem_girl_by_id(user_id: int, girl_id: int):
+def get_harem_girl_by_id(user_id: int, girl_id: int) -> BattleGirl:
+    # print(logtime()+"get_harem_girl_by_id("+str(user_id)+", "+str(girl_id)+")")
+    girl = configparser.ConfigParser()
     if os.path.exists(dir_path + str(user_id) + "/" + str(girl_id) + ".ini"):
-        girl = configparser.ConfigParser()
         girl.read(dir_path + str(user_id) + "/" + str(girl_id) + ".ini", 'utf-8')
-        return BattleGirl(girl)
-    else:
-        return None
+    return BattleGirl(girl)
 
 
 def randomize(to_randomize: int):

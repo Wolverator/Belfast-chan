@@ -297,13 +297,25 @@ class AzurLane(commands.Cog):
             .replace("gamer", "Gamer") \
             .replace("sandy", "Sandy") \
             .replace("Hdn", "HDN") \
-            .replace("cavour", "Cavour") \
-            .replace("george", "George") \
-            .replace("malin", "Malin") \
-            .replace("cesare", "Cesare") \
-            .replace("venetto", "Veneto") \
-            .replace("veneto", "Veneto") \
-            .replace("opini", "Opini") \
+            .replace("_cavour", "_Cavour") \
+            .replace("_george", "_George") \
+            .replace("_malin", "_Malin") \
+            .replace("_cesare", "_Cesare") \
+            .replace("_venetto", "_Veneto") \
+            .replace("_veneto", "_Veneto") \
+            .replace("_opini", "_Opini") \
+            .replace("_aqua", "_Aqua") \
+            .replace("_sora", "_Sora") \
+            .replace("_mio", "_Mio") \
+            .replace("_merkur", "_Merkur") \
+            .replace("_soyuz", "_Soyuz") \
+            .replace("_rossi", "_Rossi") \
+            .replace("_galiss", "_Galiss") \
+            .replace("_matsuri", "_Matsuri") \
+            .replace("_shion", "_Shion") \
+            .replace("_ayame", "_Ayame") \
+            .replace("_fubuki", "_Fubuki") \
+            .replace("_powell", "_Powell") \
             .replace("Opiniatre", "Opiniâtre")
         if ship_name == "Grosse":
             ship_name = "Friedrich_der_Grosse"
