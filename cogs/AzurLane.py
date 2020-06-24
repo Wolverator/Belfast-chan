@@ -3,12 +3,14 @@ import codecs
 import datetime
 import os
 import time
+
 import discord
 import pandas
 import requests
-from cogs.BelfastUtils import logtime
 from colorama import Fore
 from discord.ext import commands
+
+from cogs.BelfastUtils import logtime
 
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
 no_retro_type = {'120': 3, '100': 4, 'base': 5}

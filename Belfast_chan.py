@@ -3,23 +3,28 @@ import codecs
 import configparser
 import datetime
 import os
+import time
+import traceback
+
 import discord
-from cogs.BelfastUtils import logtime
 from colorama import init, Fore
 from discord.ext import commands
-from cogs.FinishedCommands import DateParser
+
+from cogs.BelfastUtils import logtime
+from cogs.Bingo import servers_with_games
 
 init(autoreset=True)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path)
 print("path: " + dir_path)
+
 description = "How can i help you, Commander?"
 config = configparser.ConfigParser()
 config.read(dir_path + "/config/config.ini")
 prefixes = ['Bel ', 'Belfast ', 'Belfast-chan ', 'Bel-chan ', 'Belchan ', 'bel ', 'belfast ', 'belfast-chan ', 'bel-chan ', 'belchan ']
 
-cogs = ['cogs.AzurLane', 'cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.BelfastGame']
+cogs = ['cogs.AzurLane', 'cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.BelfastGame', 'cogs.Bingo']
 
 
 # funcs
@@ -107,6 +112,19 @@ class BelfastBot(commands.Bot):
                     ""
                 await reaction.message.edit(
                     embed=self.get_cog('AzurLane').update_embed(reaction.message.embeds[0], stat_type))
+            print(user.name + " reacted with " + str(reaction.emoji))
+
+            print("1" + str(user != self.user))
+            print("2" + str(reaction.emoji.id) + "///" + str(reaction.emoji.id == "<:AL:569511684650041364>"))
+            print("3" + str(reaction.message.content.find("Azure Lane Bingo") != (-1)))
+            print("4" + str(servers_with_games[reaction.message.guild.id].count(user.id) == 0))
+
+            if user != self.user and str(reaction.emoji.id) == "569511684650041364" \
+                    and reaction.message.content.find("Azure Lane Bingo") != (-1) \
+                    and servers_with_games[reaction.message.guild.id].count(user.id) == 0:
+                print(user.name + " reacted with " + str(reaction.emoji) + " and added to Bingo Game")
+                servers_with_games[reaction.message.guild.id].append(user.id)
+                await reaction.message.channel.send(user.name + " was added to upcoming game!")
 
     # guild events
     @commands.Cog.listener()
@@ -158,6 +176,11 @@ class BelfastBot(commands.Bot):
         await self.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game("loading..."))
 
     @commands.Cog.listener()
+    async def on_disconnect(self):
+        print(logtime() + Fore.YELLOW + "Connected lost!")
+        await self.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game("loading..."))
+
+    @commands.Cog.listener()
     async def on_resume(self):
         print(logtime() + Fore.GREEN + "Connected restored successfully!")
         await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
@@ -165,8 +188,6 @@ class BelfastBot(commands.Bot):
     @commands.Cog.listener()
     async def on_ready(self):
         self.get_cog('BelfastUtils').process_guilds()
-        if os.path.getsize(dir_path + "/config/last maintenance.txt") > 0:
-            self.get_cog('General').maintenance_finish = DateParser.parse(timestr=codecs.open(dir_path + "/config/last maintenance.txt", encoding='utf-8').read())
         await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
         print(Fore.GREEN + logtime() + "Ready to serve my Master!")
         while self.is_ready():
@@ -175,7 +196,7 @@ class BelfastBot(commands.Bot):
             await asyncio.sleep(180)
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(self, ctx: discord.ext.commands.context, error):
         if isinstance(error, discord.ext.commands.errors.CommandNotFound):
             msg = await ctx.send("I am sorry, " + self._user(ctx.author.id) + "! :no_entry:\nBut this in unknown command.")
             await asyncio.sleep(15)
@@ -187,10 +208,23 @@ class BelfastBot(commands.Bot):
             await msg.delete()
             return
         else:
-            msg = await ctx.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:", description=str(error)))
-            await asyncio.sleep(35)
+            error_log = str(type(error)) + "\n========================" + ''.join(traceback.format_tb(error.__traceback__))
+            for arg in error.args:
+                error_log += "-arg- = " + arg + "\n"
+            text = "Encountered an error, gathering data...\n"
+            text += "Discord guild: '" + ctx.message.guild.name + "'; channel: '" + ctx.message.channel.name + "'; Commander: '" + ctx.message.author.display_name + "'.\n"
+            text += "Error-causing message text: '" + ctx.message.clean_content + "'.\n"
+            text += "Logging...\n"
+            filename = "/error_logs/error_log_" + str(time.time()) + ".txt"
+            with codecs.open(os.path.abspath(dir_path + filename), encoding='utf-8', mode='w') as output_file:
+                output_file.write(text + "\n\n" + str(error_log) + "\n")
+                output_file.close()
+            text += "Error log created: " + filename
+            msg = await ctx.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:", description=text))
+            owner = await self.fetch_user(self.owner_id)
+            await owner.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:", description=text))
+            await asyncio.sleep(25)
             await msg.delete()
-            raise error
 
 
 if __name__ == '__main__':
@@ -202,4 +236,7 @@ if __name__ == '__main__':
     create_if_not_exists("/servers")
     create_if_not_exists("/suggests")
     create_if_not_exists("/users")
+    create_if_not_exists("/logs")
+    create_if_not_exists("/error_logs")
+
     BelfastBot().run(config['Main']['token'], bot=True, reconnect=True)

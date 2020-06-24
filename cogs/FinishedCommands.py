@@ -3,12 +3,14 @@ import codecs
 import datetime
 import os
 import time
-import discord
-from dateutil.parser import parser
-from cogs.BelfastUtils import logtime
-from colorama import Fore
-from discord.ext import commands
 from datetime import datetime as d
+
+import discord
+from colorama import Fore
+from dateutil.parser import parser
+from discord.ext import commands
+
+from cogs.BelfastUtils import logtime
 
 DateParser = parser()
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
@@ -36,15 +38,20 @@ async def mt_reminder():
 
 
 class General(commands.Cog):
+    global maintenance_finish
+
     def __init__(self, bot):
         self.bot = bot
+        if os.path.getsize(dir_path + "/config/last maintenance.txt") > 0:
+            maintenance_finish = DateParser.parse(timestr=codecs.open(dir_path + "/config/last maintenance.txt", encoding='utf-8').read())
 
     @commands.command(pass_context=True, aliases=['hey', 'hello', 'hello?', 'answer'], hidden=True)
     async def test(self, ctx):
         await ctx.channel.trigger_typing()
         await asyncio.sleep(0.1)
         if await ctx.bot.is_owner(ctx.author):
-            msg = await ctx.send("Yes, Master? <:AzurLane:569511684650041364>" + "\n" + str(time.time()).partition('.')[0])
+            test_text = "Yes, Master? <:AzurLane:569511684650041364>" + "\n" + str(time.time()).partition('.')[0]
+            msg = await ctx.send(test_text)
             await asyncio.sleep(15)
             await msg.delete()
         else:
@@ -125,33 +132,35 @@ class General(commands.Cog):
     async def maintenance(self, ctx):
         global maintenance_remind_where_whom
         global maintenance_finish
-        time_left = datetime.timedelta(
-            seconds=(maintenance_finish.timestamp() - datetime.datetime.now().timestamp()))
-        if time_left.total_seconds() >= 0:
-            text = ":clock1: Servers should be online in " + str(time_left).partition('.')[0] + "."
-            if already_in_maintenance(ctx.author.id):
-                text += "\nYou're already in my 'to-remind-list' for the maintenance ending, " + ctx.author.display_name + "."
-            else:
-                if ctx.channel in maintenance_remind_where_whom.keys():
-                    maintenance_remind_where_whom[ctx.channel] = maintenance_remind_where_whom.get(ctx.channel) + str(
-                        ", <@" + str(ctx.author.id) + ">")
+        if maintenance_finish:
+            time_left = datetime.timedelta(
+                seconds=(maintenance_finish.timestamp() - datetime.datetime.now().timestamp()))
+            if time_left.total_seconds() >= 0:
+                text = ":clock1: Servers should be online in " + str(time_left).partition('.')[0] + "."
+                if already_in_maintenance(ctx.author.id):
+                    text += "\nYou're already in my 'to-remind-list' for the maintenance ending, " + ctx.author.display_name + "."
                 else:
-                    maintenance_remind_where_whom[ctx.channel] = str("\n<@" + str(ctx.author.id) + ">")
-                text += "\nI've also added you to 'to-remind-list', " + self.bot._user(ctx.author.id) + ".\nThus I'll mention you in this channel when servers will come online."
-                await ctx.message.add_reaction('✅')
+                    if ctx.channel in maintenance_remind_where_whom.keys():
+                        maintenance_remind_where_whom[ctx.channel] = maintenance_remind_where_whom.get(ctx.channel) + str(
+                            ", <@" + str(ctx.author.id) + ">")
+                    else:
+                        maintenance_remind_where_whom[ctx.channel] = str("\n<@" + str(ctx.author.id) + ">")
+                    text += "\nI've also added you to 'to-remind-list', " + self.bot._user(ctx.author.id) + ".\nThus I'll mention you in this channel when servers will come online."
+                    await ctx.message.add_reaction('✅')
+            else:
+                text = "Servers should be online, Commander.\nMay The Luck be with You!\n" \
+                       + "\nPrevious maintenance was finished: " + str(maintenance_finish) + " (UTC +3)"
         else:
-            text = "Servers should be online, Commander.\nMay The Luck be with You!\n" \
-                   + "\nPrevious maintenance was finished: " + str(maintenance_finish) + " (UTC +3)"
+            text = "Sorry, Commander, but there's no info about nor previous, neither incoming maintenances!"
         msg = await ctx.send(text)
         await asyncio.sleep(25)
         await msg.delete()
 
-    @commands.command(pass_context=True, aliases=['set_mt', 'setmt'], brief="[owner-only]Set time for maintenance end", hidden=True)
+    @commands.command(pass_context=True, brief="[owner-only]Set time for maintenance end", hidden=True)
     @commands.is_owner()
     async def set_maintenance(self, ctx, *, maintenance_time: str):
         global maintenance_finish
         await ctx.channel.trigger_typing()
-        # noinspection PyArgumentList
         if await self.bot.is_owner(ctx.author):
             maintenance_finish = DateParser.parse(timestr=maintenance_time)
             with codecs.open(os.path.abspath("config/last maintenance.txt"), encoding='utf-8', mode='w') as output_file:
