@@ -96,6 +96,24 @@ class BattleGirl(object):
                 enemy.health) + "\n")
 
 
+def get_reload_time(reload):
+    if reload < 400:
+        return 10 + (reload / 50)
+    elif reload < 500:
+        return 8 + (reload / 40)
+    elif reload < 600:
+        return 4 + (reload / 30)
+    elif reload < 700:
+        return (reload / 20) - 6
+    elif reload < 800:
+        return (reload / 10) - 41
+    elif reload < 900:
+        return (reload / 5) - 120
+    else:
+        return (reload / 2) - 390
+
+
+
 class BelfastGame(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -161,7 +179,7 @@ class BelfastGame(commands.Cog):
         battle_log = ""
         res_log = ""
 
-        battle_time = 1
+        battle_time = 0
         user1 = self.bot.get_user(user1id)
         user2 = self.bot.get_user(user2id)
         fleet1 = {}
@@ -196,39 +214,39 @@ class BelfastGame(commands.Cog):
             for girl in fleet1.values():
                 if girl and girl.health > 0:
                     # battle_log+="fleet1-"+str(girl)+"\n"
-                    if girl.firepower > 0 and (battle_time % (100 - girl.reload) == 0):
+                    if girl.firepower > 0 and (battle_time % int(get_reload_time(girl.reload)) == 0):
                         gid = self.get_random_girl_alive_id(fleet2)
                         if gid > 0:
-                            # print(logtime()+str(battle_time)+"s: "+girl.name+" fire")
+                            print(logtime() + str(battle_time) + "s: " + girl.name + " fire")
                             battle_log += str(battle_time) + "s, team " + user1.display_name + ": " + girl.fire_shells(fleet2[gid])
-                    if girl.torpedo > 0 and (battle_time % (200 - (girl.reload * 2)) == 0):
+                    if girl.torpedo > 0 and (battle_time % int(get_reload_time(girl.reload) * 2) == 0):
                         gid = self.get_random_girl_alive_id(fleet2)
                         if gid > 0:
-                            # print(logtime()+str(battle_time)+"s: "+girl.name+" torp")
+                            print(logtime() + str(battle_time) + "s: " + girl.name + " torp")
                             battle_log += str(battle_time) + "s, team " + user1.display_name + ": " + girl.launch_torps(fleet2[gid])
-                    if girl.aviation > 0 and (battle_time % (200 - (girl.reload * 2)) == 0):
+                    if girl.aviation > 0 and (battle_time % int(get_reload_time(girl.reload) * 2) == 0):
                         gid = self.get_random_girl_alive_id(fleet2)
                         if gid > 0:
-                            # print(logtime()+str(battle_time)+"s: "+girl.name+" avi")
+                            print(logtime() + str(battle_time) + "s: " + girl.name + " avi")
                             battle_log += str(battle_time) + "s, team " + user1.display_name + ": " + girl.aviation_attack(fleet2[gid])
 
             for girl in fleet2.values():
                 if girl and girl.health > 0:
                     # battle_log+="\nfleet2-"+str(girl)+"\n"
-                    if girl.firepower > 0 and (battle_time % (100 - girl.reload) == 0):
+                    if girl.firepower > 0 and (battle_time % int(get_reload_time(girl.reload)) == 0):
                         gid = self.get_random_girl_alive_id(fleet1)
                         if gid > 0:
-                            # print(logtime()+str(battle_time)+"s: "+girl.name+" fire")
+                            print(logtime() + str(battle_time) + "s: " + girl.name + " fire")
                             battle_log += str(battle_time) + "s, team " + user2.display_name + ": " + girl.fire_shells(fleet1[gid])
-                    if girl.torpedo > 0 and (battle_time % (200 - (girl.reload * 2)) == 0):
+                    if girl.torpedo > 0 and (battle_time % int(get_reload_time(girl.reload) * 2) == 0):
                         gid = self.get_random_girl_alive_id(fleet1)
                         if gid > 0:
-                            # print(logtime()+str(battle_time)+"s: "+girl.name+" torp")
+                            print(logtime() + str(battle_time) + "s: " + girl.name + " torp")
                             battle_log += str(battle_time) + "s, team " + user2.display_name + ": " + girl.launch_torps(fleet1[gid])
-                    if girl.aviation > 0 and (battle_time % (200 - (girl.reload * 2)) == 0):
+                    if girl.aviation > 0 and (battle_time % int(get_reload_time(girl.reload) * 2) == 0):
                         gid = self.get_random_girl_alive_id(fleet1)
                         if gid > 0:
-                            # print(logtime()+str(battle_time)+"s: "+girl.name+" avi")
+                            print(logtime() + str(battle_time) + "s: " + girl.name + " avi")
                             battle_log += str(battle_time) + "s, team " + user2.display_name + ": " + girl.aviation_attack(fleet1[gid])
             for girl in fleet1.values():
                 if girl and girl.health > 0:
