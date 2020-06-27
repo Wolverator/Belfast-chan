@@ -99,7 +99,7 @@ class General(commands.Cog):
         await msg.delete()
         return
 
-    @commands.command(pass_context=True, aliases=['amtf'], brief="Check when servers will be back online")
+    @commands.command(pass_context=True, aliases=['amtf'], hidden=True, brief="[owner-only]Add someone to maintenance end mentions")
     @commands.is_owner()
     async def add_mt_reminder_for(self, ctx, user_id: int):
         global maintenance_remind_where_whom
@@ -122,37 +122,6 @@ class General(commands.Cog):
                 await ctx.message.add_reaction('✅')
         else:
             text = "Servers should be online, Commander.\nMay The Luck be with You!\n\nPrevious maintenance was finished: " + str(maintenance_finish)
-        msg = await ctx.send(text)
-        await asyncio.sleep(25)
-        await msg.delete()
-
-    @commands.command(pass_context=True, aliases=['mt'], brief="Check when servers will be back online")
-    async def maintenance(self, ctx):  # TODO: move users to remind mt end about also into file and load that list at start-up
-        global maintenance_remind_where_whom
-        global maintenance_finish
-        if os.path.getsize(dir_path + "/config/last maintenance.txt") > 0:
-            maintenance_finish = DateParser.parse(timestr=codecs.open(dir_path + "/config/last maintenance.txt", encoding='utf-8').read())
-        if maintenance_finish:
-            time_left = datetime.timedelta(
-                seconds=(maintenance_finish.timestamp() - datetime.datetime.now().timestamp()))
-            if time_left.total_seconds() >= 0:
-                text = ":clock1: Servers should be online in " + str(time_left).partition('.')[0] + "."
-                if already_in_maintenance(ctx.author.id):
-                    text += "\nYou're already in my 'to-remind-list' for the maintenance ending, " + ctx.author.display_name + "."
-                else:
-                    if ctx.channel in maintenance_remind_where_whom.keys():
-                        maintenance_remind_where_whom[ctx.channel] = maintenance_remind_where_whom.get(ctx.channel) + str(
-                            ", <@" + str(ctx.author.id) + ">")
-                    else:
-                        maintenance_remind_where_whom[ctx.channel] = str("\n<@" + str(ctx.author.id) + ">")
-                    text += "\nI've also added you to 'to-remind-list', " + self.bot._user(ctx.author.id) + ".\nThus I'll mention you in this channel when servers will come online."
-                    await ctx.message.add_reaction('✅')
-            else:
-                text = "Servers should be online, Commander.\nMay The Luck be with You!\n" \
-                       + "\nPrevious maintenance was finished: " + str(maintenance_finish) + " (UTC +3)"
-        else:
-            text = "Sorry, Commander, but there's no info about nor previous, neither incoming maintenances!"
-            text += str(os.path.getsize(dir_path + "/config/last maintenance.txt"))
         msg = await ctx.send(text)
         await asyncio.sleep(25)
         await msg.delete()

@@ -25,6 +25,38 @@ class AzurLane(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.command(pass_context=True, aliases=['mt'], brief="Check when servers will be back online")
+    async def maintenance(self, ctx):  # TODO: move users to remind mt end about also into file and load that list at start-up
+        from cogs.FinishedCommands import maintenance_finish
+        if os.path.getsize(dir_path + "/config/last maintenance.txt") > 0:
+            from cogs.FinishedCommands import DateParser
+            maintenance_finish = DateParser.parse(timestr=codecs.open(dir_path + "/config/last maintenance.txt", encoding='utf-8').read())
+        if maintenance_finish:
+            time_left = datetime.timedelta(
+                seconds=(maintenance_finish.timestamp() - datetime.datetime.now().timestamp()))
+            if time_left.total_seconds() >= 0:
+                text = ":clock1: Servers should be online in " + str(time_left).partition('.')[0] + "."
+                if self.bot.get_cog('General').already_in_maintenance(ctx.author.id):
+                    text += "\nYou're already in my 'to-remind-list' for the maintenance ending, " + ctx.author.display_name + "."
+                else:
+                    from cogs.FinishedCommands import maintenance_remind_where_whom
+                    if ctx.channel in maintenance_remind_where_whom.keys():
+                        maintenance_remind_where_whom[ctx.channel] = maintenance_remind_where_whom.get(ctx.channel) + str(
+                            ", <@" + str(ctx.author.id) + ">")
+                    else:
+                        maintenance_remind_where_whom[ctx.channel] = str("\n<@" + str(ctx.author.id) + ">")
+                    text += "\nI've also added you to 'to-remind-list', " + self.bot._user(ctx.author.id) + ".\nThus I'll mention you in this channel when servers will come online."
+                    await ctx.message.add_reaction('✅')
+            else:
+                text = "Servers should be online, Commander.\nMay The Luck be with You!\n" \
+                       + "\nPrevious maintenance was finished: " + str(maintenance_finish) + " (UTC +3)"
+        else:
+            text = "Sorry, Commander, but there's no info about nor previous, neither incoming maintenances!"
+            text += str(os.path.getsize(dir_path + "/config/last maintenance.txt"))
+        msg = await ctx.send(text)
+        await asyncio.sleep(25)
+        await msg.delete()
+
     @commands.command(pass_context=True, aliases=['ship'], brief="Show girl's info from official Wiki")
     async def info(self, ctx, *, girl_name="placeholderLVL99999"):
         await ctx.channel.trigger_typing()
@@ -136,7 +168,7 @@ class AzurLane(commands.Cog):
                 Retrofit = True
             file_i.write(dicts_info[i].to_string() + "\n")
         file_i.close()
-        if dicts_info[1][1][2] == "Submarine":
+        if dicts_info[1][1][2] == "Submarine" or dicts_info[1][1][2] == "Submarine Carrier":
             Submarine = True
         web_raw = codecs.open(path_to_file, encoding='utf-8').read()
         if ship_name.__contains__("Neptune") and dicts_info[1][1][1].__contains__("Royal Navy"):
@@ -155,25 +187,32 @@ class AzurLane(commands.Cog):
         resultEmbed.description += str(dicts_info[0][0][1]) + ": " + str(dicts_info[0][1][1]) + "\n"
         resultEmbed.description += str(dicts_info[1][0][1]) + ": " + str(dicts_info[1][1][1]) + "\n"
         resultEmbed.description += str(dicts_info[1][0][2]) + ": " + str(dicts_info[1][1][2]) + "\n"
-        resultEmbed.description += "**Skills:**\n"
+        for i in range(len(dicts_info)):
+            if "Obtainment" in dicts_info[i].keys() \
+                    and not str(dicts_info[i]["Obtainment"][0]).startswith("Available in Medal Exchange for ") \
+                    and not str(dicts_info[i]["Obtainment"][0]).startswith("Research"):
+                resultEmbed.description += "**LIMITED SHIP:** "
+                for j in range(len(dicts_info[i]["Obtainment"])):
+                    resultEmbed.description += str(dicts_info[i]["Obtainment"][j]) + "\n"
+        resultEmbed.description += "\n**Skills:**\n"
         if Submarine:
-            resultEmbed.description += "**" + str(dicts_info[12]['Skills'][0]) + "**: " + str(dicts_info[12]['Skills.1'][0]) + "\n"
+            resultEmbed.description += "**" + str(dicts_info[12]['Skills'][0]).split("CN:")[0] + "**: " + str(dicts_info[12]['Skills.1'][0]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[12]['Skills'][1]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[12]['Skills'][1]) + "**: " + str(dicts_info[12]['Skills.1'][1]) + "\n"
+                resultEmbed.description += "**" + str(dicts_info[12]['Skills'][1]).split("CN:")[0] + "**: " + str(dicts_info[12]['Skills.1'][1]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[12]['Skills'][2]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[12]['Skills'][2]) + "**: " + str(dicts_info[12]['Skills.1'][2]) + "\n"
+                resultEmbed.description += "**" + str(dicts_info[12]['Skills'][2]).split("CN:")[0] + "**: " + str(dicts_info[12]['Skills.1'][2]).strip("Barrage preview (gif)") + "\n"
         elif Retrofit:
-            resultEmbed.description += "**" + str(dicts_info[11]['Skills'][0]) + "**: " + str(dicts_info[11]['Skills.1'][0]) + "\n"
+            resultEmbed.description += "**" + str(dicts_info[11]['Skills'][0]).split("CN:")[0] + "**: " + str(dicts_info[11]['Skills.1'][0]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[11]['Skills'][1]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[11]['Skills'][1]) + "**: " + str(dicts_info[11]['Skills.1'][1]) + "\n"
+                resultEmbed.description += "**" + str(dicts_info[11]['Skills'][1]).split("CN:")[0] + "**: " + str(dicts_info[11]['Skills.1'][1]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[11]['Skills'][2]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[11]['Skills'][2]) + "**: " + str(dicts_info[11]['Skills.1'][2]) + "\n"
+                resultEmbed.description += "**" + str(dicts_info[11]['Skills'][2]).split("CN:")[0] + "**: " + str(dicts_info[11]['Skills.1'][2]).strip("Barrage preview (gif)") + "\n"
         else:
-            resultEmbed.description += "**" + str(dicts_info[9]['Skills'][0]) + "**: " + str(dicts_info[9]['Skills.1'][0]) + "\n"
+            resultEmbed.description += "**" + str(dicts_info[9]['Skills'][0]).split("CN:")[0] + "**: " + str(dicts_info[9]['Skills.1'][0]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[9]['Skills'][1]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[9]['Skills'][1]) + "**: " + str(dicts_info[9]['Skills.1'][1]) + "\n"
+                resultEmbed.description += "**" + str(dicts_info[9]['Skills'][1]).split("CN:")[0] + "**: " + str(dicts_info[9]['Skills.1'][1]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[9]['Skills'][2]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[9]['Skills'][2]) + "**: " + str(dicts_info[9]['Skills.1'][2]) + "\n"
+                resultEmbed.description += "**" + str(dicts_info[9]['Skills'][2]).split("CN:")[0] + "**: " + str(dicts_info[9]['Skills.1'][2]).strip("Barrage preview (gif)") + "\n"
         resultEmbed.description += "\nTo choose stats press reactions:\n1 - **1** lvl, 2 - **100** lvl, 3 - **120** lvl"
         if Retrofit and not Submarine:
             resultEmbed.description += "\n  **RETROFITTABLE**: 4 - **100** lvl+**retro**, 5 - **120** lvl+**retro**\n"
