@@ -9,6 +9,7 @@ import traceback
 import discord
 from colorama import init, Fore
 from discord.ext import commands
+from discord.utils import find
 
 from cogs.BelfastUtils import logtime
 
@@ -79,11 +80,21 @@ class BelfastBot(commands.Bot):
             except OSError:
                 print(logtime() + "Создать директорию %s не удалось" % path)
 
-    def _user(self, _id: int):
+    def user_title(self, _id: int):
         if _id == self.owner_id:
             return "Master"
         else:
             return "Commander"
+
+    def get_user_from_guild(self, guild: discord.Guild, some_user: str) -> discord.User:
+        user = find(lambda m: m.name == some_user, guild.members)
+        if user is None:
+            user = find(lambda m: m.display_name == some_user, guild.members)
+        if user is None:
+            user = find(lambda m: str(m) == some_user, guild.members)
+        if user is None and some_user.strip("@<>!").isdigit():
+            user = find(lambda m: m.id == int(some_user.strip("@<>!")), guild.members)
+        return user
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -98,24 +109,27 @@ class BelfastBot(commands.Bot):
             print(logtime() + guild + Fore.YELLOW + str(message.channel) + author + ":" + Fore.RESET + message.clean_content)
             if (message.clean_content.strip(" \n") == "@Belfast-chan#8997" and self.user in message.mentions) or (message.content + " ") in prefixes:
                 await message.channel.trigger_typing()
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(2)
                 if await self.is_owner(message.author):
                     msg = await message.channel.send("Yes, Master?")
-                    await asyncio.sleep(5)
-                    await msg.delete()
+                    await msg.delete(delay=15)
+                    await message.delete(delay=15)
                 else:
-                    msg = await message.channel.send("How can i help you, Commander?\nFor 'help' command, please write ``Bel info``.")
-                    await asyncio.sleep(25)
-                    await msg.delete()
+                    msg = await message.channel.send("How can i help you, Commander?\nFor 'help' command, please write `Bel info`.")
+                    await msg.delete(delay=25)
+                    await message.delete(delay=25)
             await self.process_commands(message)
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
         if not user.bot:
             emojis = []
+            '''todo refactor this shit to wait for reactions to exact message depending on command'''
+            '''emojis - list of emojis added by Belfast-chan'''
             for _reaction in reaction.message.reactions:
                 if _reaction.me:
                     emojis.append(_reaction.emoji)
+            '''if user reacts to message with embed, and that ambed is asked by that user and reacts with proper emoji'''
             if user != self.user and reaction.message.embeds and reaction.message.embeds[0].footer \
                     and str(reaction.message.embeds[0].footer.text) == str(user.id) and reaction.emoji in emojis:
                 if reaction.emoji == "1⃣":
@@ -176,21 +190,15 @@ class BelfastBot(commands.Bot):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        if member != self.user:
-            self.process_guilds()
-            print(logtime() + Fore.YELLOW + "Member " + Fore.CYAN + str(
-                member) + Fore.YELLOW + " has left guild: " + Fore.CYAN + member.guild.name)
+        self.process_guilds()
+        print(logtime() + Fore.YELLOW + "Member " + Fore.CYAN + str(
+            member) + Fore.YELLOW + " has left guild: " + Fore.CYAN + member.guild.name)
 
     # connect events
     @commands.Cog.listener()
     async def on_connect(self):
         print(logtime() + Fore.GREEN + "Connected successfully!")
-        await self.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game("loading..."))
-
-    @commands.Cog.listener()
-    async def on_disconnect(self):
-        print(logtime() + Fore.YELLOW + "Connected lost!")
-        await self.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game("loading..."))
+        await self.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(name="loading..."))
 
     @commands.Cog.listener()
     async def on_resume(self):
@@ -210,34 +218,32 @@ class BelfastBot(commands.Bot):
     @commands.Cog.listener()
     async def on_command_error(self, ctx: discord.ext.commands.context, error):
         if isinstance(error, discord.ext.commands.errors.CommandNotFound):
-            msg = await ctx.send("I am sorry, " + self._user(ctx.author.id) + "! :no_entry:\nBut this in unknown command.")
-            await asyncio.sleep(15)
-            await msg.delete()
-            return
+            await ctx.send("I am sorry, " + self.user_title(ctx.author.id) + "! :no_entry:\nBut this in unknown command.", delete_after=15)
         elif isinstance(error, discord.ext.commands.errors.NotOwner):
-            msg = await ctx.send("I am sorry, Commander! :no_entry:\nBut only my Master can give me this order.")
-            await asyncio.sleep(15)
-            await msg.delete()
-            return
+            await ctx.send("I am sorry, Commander! :no_entry:\nBut only my Master can give me this order.", delete_after=15)
         else:
-            error_log = str(type(error)) + "\n========================" + str(error) + "\n========================" + ''.join(traceback.format_tb(error.__traceback__))
+            error_log = str(type(error)) + "\n========================\n" + str(error) \
+                        + "\n========================\n" + \
+                        str("".join(traceback.format_exception(etype=type(error),
+                                                               value=error,
+                                                               tb=error.__traceback__))).split("The above exception was the direct cause of the following")[0] + "\n"
             for arg in error.args:
                 error_log += "-arg- = " + arg + "\n"
             text = "Encountered an error, gathering data...\n"
-            text += "Discord guild: '" + ctx.message.guild.name + "'; channel: '" + ctx.message.channel.name + "'; Commander: '" + ctx.message.author.display_name + "'.\n"
-            text += "Error-causing message text: '" + ctx.message.clean_content + "'.\n"
+            text += "Discord guild: `" + ctx.message.guild.name + "`\nChannel: `" + ctx.message.channel.name + "`\nUser: `" + ctx.message.author.display_name + "`\n"
+            text += "Error-causing message text: `" + ctx.message.clean_content + "`\n"
             text += "Logging...\n"
             filename = "/error_logs/error_log_" + str(time.time()) + ".txt"
             with codecs.open(os.path.abspath(dir_path + filename), encoding='utf-8', mode='w') as output_file:
                 output_file.write(text + "\n\n" + str(error_log) + "\n")
                 output_file.close()
             text += "Error log created: " + filename
-            msg = await ctx.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:", description=text + "\n" + str(error)))
+            msg = await ctx.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:",
+                                                     description=text + "\n\n" + str(error)), delete_after=30)
             owner = await self.fetch_user(self.owner_id)
-            # await owner.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:", description=text))
-            await asyncio.sleep(1)
-            await msg.delete()
-            raise error
+            await owner.send(embed=discord.Embed(title=":bangbang:ERROR:bangbang:",
+                                                 description=text + "\n\n" + str(error)))
+            await ctx.message.delete(delay=30)
 
 
 if __name__ == '__main__':

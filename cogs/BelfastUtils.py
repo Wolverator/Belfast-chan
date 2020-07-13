@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import os
 import time
@@ -6,7 +5,6 @@ from platform import python_version
 
 import discord
 from discord.ext import commands
-from discord.utils import find
 
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
 time_start = time.time()
@@ -19,30 +17,20 @@ class BelfastUtils(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def get_user(self, guild: discord.Guild, some_user: str) -> discord.User:
-        user = find(lambda m: m.name == some_user, guild.members)
-        if user is None:
-            user = find(lambda m: m.display_name == some_user, guild.members)
-        if user is None:
-            user = find(lambda m: str(m) == some_user, guild.members)
-        if user is None and some_user.strip("@<>!").isdigit():
-            user = find(lambda m: m.id == int(some_user.strip("@<>!")), guild.members)
-        return user
-
     @commands.command(pass_context=True, aliases=['ava', 'mypp'], brief="Show your or other user's avatar")
     @commands.guild_only()
     async def avatar(self, ctx, *, some_user="placeholderLVL99999"):
         await ctx.channel.trigger_typing()
         if some_user == "placeholderLVL99999":
             some_user = ctx.author.id
-        user = self.get_user(ctx.guild, some_user)
+        user = self.bot.get_user_from_guild(ctx.guild, some_user)
         if user is not None:
             resultEmbed = discord.Embed()
             resultEmbed.set_author(name=str(user))
             resultEmbed.set_image(url=user.avatar_url)
             await ctx.send(embed=resultEmbed)
         else:
-            await ctx.send("I am sorry, " + self.bot._user(ctx.author.id) + "!\nUser with predicate **" + some_user + "** not found on this server.")
+            await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nUser with predicate **" + some_user + "** not found on this server.")
 
     @commands.command(pass_context=True, hidden=True)
     async def stats(self, ctx):
@@ -55,7 +43,7 @@ class BelfastUtils(commands.Cog):
                 bots += 1
             else:
                 users += 1
-        author = self.bot.get_user(self.bot.owner_id)
+        author = self.bot.get_user_from_guild(ctx.guild, str(self.bot.owner_id))
         scan_result = scan_dir(dir_path)
         resultEmbed = discord.Embed()
         resultEmbed.set_thumbnail(url=self.bot.user.avatar_url)
@@ -75,9 +63,7 @@ class BelfastUtils(commands.Cog):
         text += "Discord.py version: **{0}**\n".format(str(discord.__version__))
 
         resultEmbed.description = text
-        msg = await ctx.send(embed=resultEmbed)
-        await asyncio.sleep(45)
-        await msg.delete()
+        await ctx.send(embed=resultEmbed, delete_after=45)
 
     @commands.command(pass_context=True, hidden=True)
     @commands.is_owner()
@@ -86,9 +72,7 @@ class BelfastUtils(commands.Cog):
         for member in self.bot.users:
             if member.bot:
                 text += str(member) + "\n"
-        msg = await ctx.send("```" + text + "```")
-        await asyncio.sleep(15)
-        await msg.delete()
+        await ctx.send("```" + text + "```", delete_after=15)
 
     @commands.command(pass_context=True, hidden=True)
     @commands.is_owner()
@@ -97,9 +81,7 @@ class BelfastUtils(commands.Cog):
         for member in self.bot.users:
             if not member.bot:
                 text += str(member) + "\n"
-        msg = await ctx.send("```" + text + "```")
-        await asyncio.sleep(15)
-        await msg.delete()
+        await ctx.send("```" + text + "```", delete_after=15)
 
 
 def scan_dir(path):
