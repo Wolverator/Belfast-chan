@@ -717,7 +717,7 @@ def clear_folder(string: str):
     count = 0
     for name1 in os.listdir(string):
         name = string + name1
-        print(name)
+        #print(name)
         if os.path.isdir(name) and not name.endswith("568914197048459273") and not name.endswith("624990745132138496"):
             count += clear_folder(name + '/')
             os.rmdir(os.path.abspath(name))

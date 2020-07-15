@@ -19,19 +19,22 @@ class Testing(commands.Cog):
         new_role = discord.utils.get(ctx.guild.roles, name=role)
         if ctx.guild == self.bot.TigersMeadow and new_role.id == 569993566311415809:
             await ctx.author.add_roles(new_role)
-            await ctx.send("Done! :white_check_mark:")
+            await ctx.send("Done! :white_check_mark:", delete_after=15)
+            await ctx.message.delete(delay=15)
             return
         if ctx.guild == self.bot.TigersMeadow and new_role.id == 570131573463318528 and commander_role in ctx.author.roles:
             await ctx.author.remove_roles(commander_role)
             await ctx.author.add_roles(new_role)
-            await ctx.send("Done! :white_check_mark:")
+            await ctx.send("Done! :white_check_mark:", delete_after=15)
+            await ctx.message.delete(delay=15)
             return
         try:
             if ctx.author.top_role > new_role:
                 await ctx.author.add_roles(new_role)
-                await ctx.send("Done! :white_check_mark:")
+                await ctx.send("Done! :white_check_mark:", delete_after=15)
+                await ctx.message.delete(delay=15)
         except Exception:
-            await ctx.send("Error! :no_entry:\nSomething went wrong or someone don't have permissions for that role.")
+            await ctx.send("Error! :no_entry:\nSomething went wrong or someone don't have permissions for that role.", delete_after=15)
 
 
 def setup(bot):

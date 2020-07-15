@@ -46,7 +46,7 @@ class General(commands.Cog):
         await ctx.channel.trigger_typing()
         if await ctx.bot.is_owner(ctx.author):
             test_text = "Yes, Master? <:AzurLane:569511684650041364>" + "\n"
-            test_text += "" + self.bot.user.id
+            #test_text += "" + self.bot.user.id
             await ctx.send(test_text, delete_after=15)
             await ctx.message.delete(delay=15)
         else:
@@ -56,7 +56,7 @@ class General(commands.Cog):
     @commands.command(pass_context=True, brief="Get invite to my server")
     async def server(self, ctx):
         await ctx.channel.trigger_typing()
-        ctx.send("Join my Master's guild if you want or if you need some help:\nhttps://discord.gg/86YrJNq")
+        await ctx.send("Join my Master's guild if you want or if you need some help:\nhttps://discord.gg/86YrJNq")
 
     @commands.command(pass_context=True, brief="Check online time")
     async def online(self, ctx):
@@ -187,6 +187,7 @@ class General(commands.Cog):
         await ctx.message.delete(delay=15)
         await asyncio.sleep(16)
         await self.bot.logout()
+        self.bot.get_cog('MudaHelper').save()
         print(logtime() + Fore.YELLOW + "Logged out!")
         os._exit(0)
 
