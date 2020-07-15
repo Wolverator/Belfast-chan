@@ -45,9 +45,9 @@ class MudaTitle(object):
                     and char not in self.total_list:
                 cha = char
                 if str(char).endswith(" ka"):
-                    cha = cha.split(" ka")[0][:cha.rfind(' ')].strip(' ')
-                if str(char).__contains__("**"):
-                    cha = cha.split("**")[0]
+                    cha = cha.split(" ka")[0][:cha.rfind(' ')]
+                if str(char).__contains__(" **"):
+                    cha = cha.split(" **")[0]
                 if str(char).__contains__(" · <:"):
                     cha = cha.split(" · <:")[0]
                 if str(char).__contains__(" => "):
@@ -68,8 +68,8 @@ class MudaHelper(commands.Cog):
 
     def load(self):
         global users_antidisable_lists, user_info_channels, titles
-        user_info_channels = ast.literal_eval(codecs.open(dir_path.replace("MudaDB", "servers/230774538579869708/user_info_channels.txt"), encoding='utf-8').read())
-        users_antidisable_lists = ast.literal_eval(codecs.open(dir_path.replace("MudaDB", "servers/230774538579869708/users_antidisable_lists.txt"), encoding='utf-8').read())
+        user_info_channels = ast.literal_eval(codecs.open(dir_path.replace("MudaDB/", "servers/230774538579869708/user_info_channels.txt"), encoding='utf-8').read())
+        users_antidisable_lists = ast.literal_eval(codecs.open(dir_path.replace("MudaDB/", "servers/230774538579869708/users_antidisable_lists.txt"), encoding='utf-8').read())
         print(logtime() + Fore.CYAN + "Loading " + str(len(os.listdir(dir_path))) + " titles...")
         for f in os.listdir(dir_path):
             profile = configparser.ConfigParser()
@@ -80,11 +80,11 @@ class MudaHelper(commands.Cog):
 
     def save(self):
         global users_antidisable_lists, user_info_channels, titles
-        with codecs.open(dir_path.replace("MudaDB", "servers/230774538579869708/users_antidisable_lists.txt"), "w") as f:
+        with codecs.open(dir_path.replace("MudaDB/", "servers/230774538579869708/users_antidisable_lists.txt"), "w") as f:
             f.write(str(users_antidisable_lists))
             f.flush()
             f.close()
-        with codecs.open(dir_path.replace("MudaDB", "servers/230774538579869708/user_info_channels.txt"), "w") as f:
+        with codecs.open(dir_path.replace("MudaDB/", "servers/230774538579869708/user_info_channels.txt"), "w") as f:
             f.write(str(user_info_channels))
             f.flush()
             f.close()
