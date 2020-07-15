@@ -40,19 +40,18 @@ class MudaTitle(object):
 
     def add_chars(self, total_list: list):
         for char in total_list:
-            if not str(char).startswith("\u200B") \
-                    and not str(char).startswith("(No result)") \
-                    and char not in self.total_list:
-                cha = char
-                if str(char).endswith(" ka"):
-                    cha = cha.split(" ka")[0][:cha.rfind(' ')]
-                if str(char).__contains__(" **"):
-                    cha = cha.split(" **")[0]
-                if str(char).__contains__(" · <:"):
-                    cha = cha.split(" · <:")[0]
-                if str(char).__contains__(" => "):
-                    cha = cha.split(" => ")[0]
-
+            cha = char
+            if str(cha).endswith(" ka"):
+                cha = cha.split(" ka")[0][:cha.rfind(' ')]
+            if str(cha).__contains__(" **"):
+                cha = cha.split(" **")[0]
+            if str(cha).__contains__(" · <:"):
+                cha = cha.split(" · <:")[0]
+            if str(cha).__contains__(" => "):
+                cha = cha.split(" => ")[0]
+            if not str(cha).startswith("\u200B") \
+                    and not str(cha).startswith("(No result)") \
+                    and cha not in self.total_list:
                 self.total_list.append(cha)
                 print(logtime() + Fore.YELLOW + "Adding " + Fore.CYAN + cha + Fore.YELLOW + " into " + Fore.CYAN + self.name)
         self.claimed_list = [char for char in self.total_list if str(char).endswith('💞')]
