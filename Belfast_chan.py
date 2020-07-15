@@ -102,37 +102,36 @@ class BelfastBot(commands.Bot):
 
     @commands.Cog.listener()
     async def on_message_edit(self, message_before, message_after):
-        if message_after.author.bot and message_after.author.id!=self.MudaMaid15_id:
+        if message_after.author.bot and message_after.author.id != self.MudaMaid15_id:
             return
-        elif message_after.author.id==self.MudaMaid15_id:
+        elif message_after.author.id == self.MudaMaid15_id:
             if message_after.channel.id in self.MudaIgnoreNextMessage.keys() and self.MudaIgnoreNextMessage[message_after.channel.id]:
                 self.MudaIgnoreNextMessage[message_after.channel.id] = False
                 self.MudaMessagesToIgnore.append(message_after.id)
             elif message_after.id not in self.MudaMessagesToIgnore:
-                #print(logtime()+ Fore.YELLOW +"processing MudaMesssage in"+ str(message_after.channel))
-                #if user checks adl
+                # print(logtime()+ Fore.YELLOW +"processing MudaMesssage in"+ str(message_after.channel))
+                # if user checks adl
                 titl = self.get_mudatitle_from_ima(str(message_after.embeds[0].author.name))
-                if message_after.embeds and str(message_after.embeds[0].author.name).__contains__("'s antidisablelist"):
-                    user = self.get_user_from_guild(message_after.guild, str(message_after.embeds[0].author.name).split("'s antidisablelist")[0])
-                    #print(logtime() + Fore.YELLOW + "sending to MudaHelper TitleforUser... ")
-                    for title in message_after.embeds[0].description.split("\n"):
-                        if title and not str(title).__contains__("antidisabled characters"):
-                            self.get_cog('MudaHelper').add_ad_title_for_user(user.id, title.strip("*"))
-                            await message_after.add_reaction('<:AzurLane:569511684650041364>')
-                #if user scrolls title pages
-                elif titl:
-                    #print(logtime() + Fore.YELLOW + "sending to MudaHelper Characters... " + Fore.CYAN + titl)
-                    #await message_after.channel.send(message_after.embeds[0].description)
-                    self.get_cog('MudaHelper').add_characters_into_title(titl.strip(" "), str(message_after.embeds[0].author.name)[1+len(titl):], message_after.embeds[0].description)
-                    await message_after.add_reaction('<:AzurLane:569511684650041364>')
-
-    print('The probability of 7 heads is: ' + str(sum([1 for i in np.random.binomial(1, 0.3, size=10) if i == 1]) / 10))
+                # if message_after.embeds and str(message_after.embeds[0].author.name).__contains__("'s antidisablelist"):
+                # user = self.get_user_from_guild(message_after.guild, str(message_after.embeds[0].author.name).split("'s antidisablelist")[0])
+                # print(logtime() + Fore.YELLOW + "sending to MudaHelper TitleforUser... ")
+                # for title in message_after.embeds[0].description.split("\n"):
+                # if title and not str(title).__contains__("antidisabled characters"):
+                # self.get_cog('MudaHelper').add_ad_title_for_user(user.id, title.strip("*"))
+                # await message_after.add_reaction('<:AzurLane:569511684650041364>')
+                # if user scrolls title pages
+                # elif titl:
+                if titl:
+                    # print(logtime() + Fore.YELLOW + "sending to MudaHelper Characters... " + Fore.CYAN + titl)
+                    # await message_after.channel.send(message_after.embeds[0].description)
+                    result = self.get_cog('MudaHelper').add_characters_into_title(titl.strip(" "), str(message_after.embeds[0].author.name)[1 + len(titl):], message_after.embeds[0].description)
+                    await message_after.channel.send(result, delete_after=15)
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.bot and message.author.id!=self.MudaMaid15_id:
+        if message.author.bot:  # and message.author.id!=self.MudaMaid15_id:
             return
-        #elif message.author.id==self.MudaMaid15_id:
+        # elif message.author.id==self.MudaMaid15_id:
         #     if message.embeds and str(message.embeds[0].author.name).__contains__("'s antidisablelist"):
         #         user = self.get_user_from_guild(message.guild, str(message.embeds[0].author.name).split("'s antidisablelist")[0])
         #         for title in message.embeds[0].description.replace("\d+ antidisabled characters\n\n","").split("\n"):
@@ -145,7 +144,7 @@ class BelfastBot(commands.Bot):
                 guild = Fore.GREEN + str(message.guild.name) + "|"
                 author = "|" + Fore.CYAN + str(message.author)
             command = str(message.clean_content)
-            if command.startswith("$$ima") and len(command)>5 and command[5] != 'w':
+            if command.startswith("$$ima") and len(command) > 5 and command[5] != 'w':
                 self.MudaIgnoreNextMessage[message.channel.id] = True
             print(logtime() + guild + Fore.YELLOW + str(message.channel) + author + ":" + Fore.RESET + message.clean_content)
             if (message.clean_content.strip(" \n") == "@Belfast-chan#8997" and self.user in message.mentions) or (message.content + " ") in prefixes:
@@ -288,14 +287,15 @@ class BelfastBot(commands.Bot):
                                                  description=text + "\n\n" + str(error)))
             await ctx.message.delete(delay=30)
 
-    def get_mudatitle_from_ima(self, title_with_charnum:str)->str:
+    def get_mudatitle_from_ima(self, title_with_charnum: str) -> str:
         import re
         ending = re.search(re.compile(" [0-9]+/[0-9]+$"), title_with_charnum)
         if ending:
-            #print(title_with_charnum[:ending.start()])
+            # print(title_with_charnum[:ending.start()])
             return title_with_charnum[:ending.start()]
         else:
             return ""
+
 
 if __name__ == '__main__':
     create_if_not_exists("/config")

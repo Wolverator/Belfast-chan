@@ -7,11 +7,9 @@ import time
 
 import discord
 import pandas
-from colorama import Fore
 from discord.ext import commands
 
 from cogs.AzurLane import no_retro_type, retro_type, submarine_type, no_retro_type_new
-from cogs.BelfastUtils import logtime
 
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "users/")
 build_cost = 100
@@ -127,44 +125,43 @@ class BattleGirl(object):
             if Submarine:
                 ids = submarine_type
             base = ids.get('120')
-            self.health+= int(int(dicts_info[base][1][0])/20)
-            self.firepower+= int(int(dicts_info[base][1][1])/20)
-            self.antiair+= int(int(dicts_info[base][1][2])/20)
-            self.antisub+= int(int(dicts_info[base][1][3])/20)
-            self.torpedo+= int(int(dicts_info[base][3][1])/20)
-            self.aviation+= int(int(dicts_info[base][3][2])/20)
-            self.reload+= int(int(dicts_info[base][5][0])/20)
-            self.evasion+= int(int(dicts_info[base][5][1])/20)
-            self.accuracy+= int(int(dicts_info[base][7][2])/20)
+            self.health += int(int(dicts_info[base][1][0]) / 20)
+            self.firepower += int(int(dicts_info[base][1][1]) / 20)
+            self.antiair += int(int(dicts_info[base][1][2]) / 20)
+            self.antisub += int(int(dicts_info[base][1][3]) / 20)
+            self.torpedo += int(int(dicts_info[base][3][1]) / 20)
+            self.aviation += int(int(dicts_info[base][3][2]) / 20)
+            self.reload += int(int(dicts_info[base][5][0]) / 20)
+            self.evasion += int(int(dicts_info[base][5][1]) / 20)
+            self.accuracy += int(int(dicts_info[base][7][2]) / 20)
         else:
             base = no_retro_type_new.get('120')
-            self.health+= int(int(dicts_info[base][1][0])/20)
-            self.firepower+= int(int(dicts_info[base][1][1])/20)
-            self.antiair+= int(int(dicts_info[base][1][2])/20)
-            self.antisub+= int(int(dicts_info[base][1][4])/20)
-            self.torpedo+= int(int(dicts_info[base][3][1])/20)
-            self.aviation+= int(int(dicts_info[base][3][2])/20)
-            self.accuracy+= int(int(dicts_info[base][3][3])/20)
-            self.reload+= int(int(dicts_info[base][5][0])/20)
-            self.evasion+= int(int(dicts_info[base][5][1])/20)
+            self.health += int(int(dicts_info[base][1][0]) / 20)
+            self.firepower += int(int(dicts_info[base][1][1]) / 20)
+            self.antiair += int(int(dicts_info[base][1][2]) / 20)
+            self.antisub += int(int(dicts_info[base][1][4]) / 20)
+            self.torpedo += int(int(dicts_info[base][3][1]) / 20)
+            self.aviation += int(int(dicts_info[base][3][2]) / 20)
+            self.accuracy += int(int(dicts_info[base][3][3]) / 20)
+            self.reload += int(int(dicts_info[base][5][0]) / 20)
+            self.evasion += int(int(dicts_info[base][5][1]) / 20)
 
 
 class BelfastGame(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
     @commands.is_owner()
     @commands.command(pass_context=True, aliases=['ge'], hidden=True)
-    async def give_exp(self, ctx, girl_id:int, exp:int):
-        #if girl_id.isdigit():
+    async def give_exp(self, ctx, girl_id: int, exp: int):
+        # if girl_id.isdigit():
         if 0 < int(girl_id) <= get_harem_size(ctx.author.id):
-            if exp>0:
+            if exp > 0:
                 await ctx.channel.trigger_typing()
                 girl = get_harem_girl_by_id(ctx.author.id, int(girl_id))
                 result = girl.add_exp(exp)
                 save_harem_girl_by_id(ctx.author.id, girl)
-                if result=="":
+                if result == "":
                     await ctx.message.add_reaction('✅')
                 else:
                     await ctx.send(embed=discord.Embed(description=result))
@@ -175,9 +172,9 @@ class BelfastGame(commands.Cog):
             resultEmbed.title = "Excuse me, but..."
             resultEmbed.description = "You do not have a girl with the stated ID, " + self.bot.user_title(ctx.author.id) + "!"
             await ctx.send(embed=resultEmbed)
-        #else:
-         #   resultEmbed = discord.Embed()
-         #   resultEmbed.title = "Excuse me, but..."
+        # else:
+        #   resultEmbed = discord.Embed()
+        #   resultEmbed.title = "Excuse me, but..."
         #    resultEmbed.description = "You forgot to choose girl's ID, " + self.bot.user_title(ctx.author.id) + "!"
         #    await ctx.send(embed=resultEmbed)
 
@@ -520,7 +517,7 @@ class BelfastGame(commands.Cog):
             with codecs.open(dir_path + (str(_user.id) + '/' + str(waifu_number) + ".ini"), 'w', 'utf-8') as waifu:
                 girl.write(waifu)
                 waifu.flush()
-                #print(logtime() + Fore.CYAN + "Girl built and saved: " + rolled_girl_name)
+                # print(logtime() + Fore.CYAN + "Girl built and saved: " + rolled_girl_name)
             return discord.Embed(title=str(waifu_number) + ") " + rolled_girl_name, description=str(dicts_info[1][1][2]) + "\n" + str(dicts_info[1][1][1]) + "\n" + category[0], color=color) \
                 .set_thumbnail(url=pic_url) \
                 .set_footer(icon_url=_user.avatar_url, text=_user.display_name)
@@ -691,7 +688,8 @@ class BelfastGame(commands.Cog):
         else:
             return ""
 
-def save_harem_girl_by_id(user_id:int, battle_girl: BattleGirl):
+
+def save_harem_girl_by_id(user_id: int, battle_girl: BattleGirl):
     girl = configparser.ConfigParser()
     if os.path.exists(dir_path + str(user_id) + "/" + str(battle_girl.id) + ".ini"):
         girl.read(dir_path + str(user_id) + "/" + str(battle_girl.id) + ".ini", 'utf-8')
@@ -710,14 +708,14 @@ def save_harem_girl_by_id(user_id:int, battle_girl: BattleGirl):
         with codecs.open(dir_path + (str(user_id) + '/' + str(battle_girl.id) + ".ini"), 'w', 'utf-8') as waifu:
             girl.write(waifu)
             waifu.flush()
-            #print(logtime() + Fore.CYAN + "Girl updated: " + battle_girl.name)
+            # print(logtime() + Fore.CYAN + "Girl updated: " + battle_girl.name)
 
 
 def clear_folder(string: str):
     count = 0
     for name1 in os.listdir(string):
         name = string + name1
-        #print(name)
+        # print(name)
         if os.path.isdir(name) and not name.endswith("568914197048459273") and not name.endswith("624990745132138496"):
             count += clear_folder(name + '/')
             os.rmdir(os.path.abspath(name))

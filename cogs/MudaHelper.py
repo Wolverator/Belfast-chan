@@ -8,12 +8,13 @@ from colorama import Fore
 from discord.ext import commands
 
 from cogs.BelfastUtils import logtime
-dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "MudaDB/")
 
+dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "MudaDB/")
 
 users_antidisable_lists = {}
 titles = {}
 user_info_channels = {}
+
 
 class MudaTitle(object):
     name = ""
@@ -23,37 +24,37 @@ class MudaTitle(object):
     total_list = []
     claimed_list = []
     unclaimed_list = []
-    def __str__(self):
-        return str(self.name + "(" + str(self.unclaimed)+" left)\n\n"+"\n".join(self.total_list))
 
-    def __init__(self, name:str, total_list:list):
+    def __str__(self):
+        return str(self.name + "(" + str(self.unclaimed) + " left)\n\n" + "\n".join(self.total_list))
+
+    def __init__(self, name: str, total_list: list):
         self.name = name
         self.total_list = []
         self.add_chars(total_list)
 
     @classmethod
     def load_from_config(cls, config):
-        #print(logtime() + Fore.CYAN + str(configparser.ConfigParser(config).sections()))
+        # print(logtime() + Fore.CYAN + str(configparser.ConfigParser(config).sections()))
         return MudaTitle(str(config.get('main', 'title')), ast.literal_eval(config.get('main', 'total_list')))
 
-
-    def add_chars(self, total_list:list):
+    def add_chars(self, total_list: list):
         for char in total_list:
-            if not str(char).startswith("\u200B")\
-                    and not str(char).startswith("(No result)")\
+            if not str(char).startswith("\u200B") \
+                    and not str(char).startswith("(No result)") \
                     and char not in self.total_list:
                 cha = char
-                if str(char).__contains__(" => "):
-                    cha = cha.split(" => ")[0]
+                if str(char).endswith(" ka"):
+                    cha = cha.split(" ka")[0][:cha.rfind(' ')].strip(' ')
                 if str(char).__contains__("**"):
                     cha = cha.split("**")[0]
                 if str(char).__contains__(" · <:"):
                     cha = cha.split(" · <:")[0]
-                if str(char).endswith(" ka"):
-                    cha = cha.split(" ka")[0][:cha.rfind(' ')].strip(' ')
+                if str(char).__contains__(" => "):
+                    cha = cha.split(" => ")[0]
 
                 self.total_list.append(cha)
-                print(logtime() + Fore.YELLOW + "Adding " + Fore.CYAN + cha + Fore.YELLOW + " into " +Fore.CYAN + self.name)
+                print(logtime() + Fore.YELLOW + "Adding " + Fore.CYAN + cha + Fore.YELLOW + " into " + Fore.CYAN + self.name)
         self.claimed_list = [char for char in self.total_list if str(char).endswith('💞')]
         self.unclaimed_list = [char for char in self.total_list if char not in self.claimed_list]
         self.total = len(self.total_list)
@@ -67,21 +68,23 @@ class MudaHelper(commands.Cog):
 
     def load(self):
         global users_antidisable_lists, user_info_channels, titles
-        user_info_channels = ast.literal_eval(codecs.open(dir_path.replace("MudaDB","servers/230774538579869708/user_info_channels.txt"), encoding='utf-8').read())
-        users_antidisable_lists = ast.literal_eval(codecs.open(dir_path.replace("MudaDB","servers/230774538579869708/users_antidisable_lists.txt"), encoding='utf-8').read())
+        user_info_channels = ast.literal_eval(codecs.open(dir_path.replace("MudaDB", "servers/230774538579869708/user_info_channels.txt"), encoding='utf-8').read())
+        users_antidisable_lists = ast.literal_eval(codecs.open(dir_path.replace("MudaDB", "servers/230774538579869708/users_antidisable_lists.txt"), encoding='utf-8').read())
+        print(logtime() + Fore.CYAN + "Loading " + str(len(os.listdir(dir_path))) + " titles...")
         for f in os.listdir(dir_path):
             profile = configparser.ConfigParser()
-            print(logtime() + Fore.CYAN + dir_path+f)
-            profile.read(dir_path+f, encoding='utf-8')
-            titles[f[:len(f)-4]] = MudaTitle.load_from_config(profile)
+            # print(logtime() + Fore.CYAN + dir_path+f)
+            profile.read(dir_path + f, encoding='utf-8')
+            titles[f[:len(f) - 4]] = MudaTitle.load_from_config(profile)
+        print(logtime() + Fore.CYAN + "Loaded " + str(len(os.listdir(dir_path))) + " titles!")
 
     def save(self):
         global users_antidisable_lists, user_info_channels, titles
-        with codecs.open(dir_path.replace("MudaDB","servers/230774538579869708/users_antidisable_lists.txt"), "w") as f:
+        with codecs.open(dir_path.replace("MudaDB", "servers/230774538579869708/users_antidisable_lists.txt"), "w") as f:
             f.write(str(users_antidisable_lists))
             f.flush()
             f.close()
-        with codecs.open(dir_path.replace("MudaDB","servers/230774538579869708/user_info_channels.txt"), "w") as f:
+        with codecs.open(dir_path.replace("MudaDB", "servers/230774538579869708/user_info_channels.txt"), "w") as f:
             f.write(str(user_info_channels))
             f.flush()
             f.close()
@@ -96,11 +99,11 @@ class MudaHelper(commands.Cog):
             user_conf.set('main', 'total_list', str(t.total_list))
             user_conf.set('main', 'claimed_list', str(t.claimed_list))
             user_conf.set('main', 'unclaimed_list', str(t.unclaimed_list))
-            with codecs.open(dir_path+title+".ini", mode="w", encoding="utf-8") as user_file:
+            with codecs.open(dir_path + title + ".ini", mode="w", encoding="utf-8") as user_file:
                 user_conf.write(user_file)
-        #print(Fore.GREEN + logtime() + "Saved MudaDB!")
+        # print(Fore.GREEN + logtime() + "Saved MudaDB!")
 
-    def add_ad_title_for_user(self, user_id:int, title:str):
+    def add_ad_title_for_user(self, user_id: int, title: str):
         global users_antidisable_lists
         if not user_id in users_antidisable_lists.keys():
             users_antidisable_lists[user_id] = [title]
@@ -108,22 +111,26 @@ class MudaHelper(commands.Cog):
         else:
             if title not in users_antidisable_lists[user_id]:
                 users_antidisable_lists[user_id].append(title)
-                print(logtime() + Fore.YELLOW + "Added AD title: " + Fore.CYAN+title)
+                print(logtime() + Fore.YELLOW + "Added AD title: " + Fore.CYAN + title)
 
-    def add_characters_into_title(self, title: str, numbers:str, descr: str):
+    def add_characters_into_title(self, title: str, numbers: str, descr: str):
         global titles
         n = descr.count("\n\n")
         if n:
             charlistraw = descr.split("\n\n")[n].split("\n")
         else:
             charlistraw = descr.split("\n")
-        #print(logtime() + Fore.GREEN + ' '.join(titles.keys()))
+        # print(logtime() + Fore.GREEN + ' '.join(titles.keys()))
         if not titles.keys().__contains__(title):
             titles[title] = MudaTitle(title, charlistraw)
-            #print(logtime() + Fore.YELLOW + "Writing Title Characters... " + Fore.CYAN + "'"+title+ "'")
+            # print(logtime() + Fore.YELLOW + "Writing Title Characters... " + Fore.CYAN + "'"+title+ "'")
+            return "Created title `" + title + "` with characters:\n```" + "\n" \
+                .join([c for c in titles[title].total_list]) + "```"
         else:
+            prev_chars = titles[title].total_list.copy()
             titles[title].add_chars(charlistraw)
-
+            return "Updated title `" + title + "` with characters:\n```" + "\n" \
+                .join([c for c in titles[title].total_list if c not in prev_chars]) + "```"
 
     @commands.command(pass_context=True, aliases=['msch'], brief="Set this channel to get info about your preferences")
     @commands.guild_only()
@@ -142,7 +149,7 @@ class MudaHelper(commands.Cog):
     async def mgetmyunclaimed(self, ctx):
         global users_antidisable_lists, titles
         await ctx.channel.trigger_typing()
-        result = '\n'.join([title for title in titles if title in users_antidisable_lists[ctx.author.id] and titles[title].unclaimed>0])
+        result = '\n'.join([title for title in titles if title in users_antidisable_lists[ctx.author.id] and titles[title].unclaimed > 0])
         await ctx.send(embed=discord.Embed(title="This titles are still not fully claimed:", description=result))
 
     @commands.command(pass_context=True, aliases=['mgadl'], brief="Get your antidisable list")
@@ -160,6 +167,7 @@ class MudaHelper(commands.Cog):
         await ctx.channel.trigger_typing()
         result = str(titles[title])
         await ctx.send(embed=discord.Embed(description=result))
+
 
 def setup(bot):
     bot.add_cog(MudaHelper(bot))
