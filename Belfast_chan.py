@@ -125,7 +125,7 @@ class BelfastBot(commands.Bot):
                     # print(logtime() + Fore.YELLOW + "sending to MudaHelper Characters... " + Fore.CYAN + titl)
                     # await message_after.channel.send(message_after.embeds[0].description)
                     result = self.get_cog('MudaHelper').add_characters_into_title(titl.strip(" "), str(message_after.embeds[0].author.name)[1 + len(titl):], message_after.embeds[0].description)
-                    await message_after.channel.send(result, delete_after=15)
+                    #await message_after.channel.send(result, delete_after=15)
 
     @commands.Cog.listener()
     async def on_message(self, message):

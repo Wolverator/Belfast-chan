@@ -124,13 +124,13 @@ class MudaHelper(commands.Cog):
         if not titles.keys().__contains__(title):
             titles[title] = MudaTitle(title, charlistraw)
             # print(logtime() + Fore.YELLOW + "Writing Title Characters... " + Fore.CYAN + "'"+title+ "'")
-            return "Created title `" + title + "` with characters:\n```" + "\n" \
-                .join([c for c in titles[title].total_list]) + "```"
+            #return "Created title `" + title + "` with characters:\n```" + "\n" \
+                #.join([c for c in titles[title].total_list]) + "```"
         else:
-            prev_chars = titles[title].total_list.copy()
+            #prev_chars = titles[title].total_list.copy()
             titles[title].add_chars(charlistraw)
-            return "Updated title `" + title + "` with characters:\n```" + "\n" \
-                .join([c for c in titles[title].total_list if c not in prev_chars]) + "```"
+            #return "Updated title `" + title + "` with characters:\n```" + "\n" \
+                #.join([c for c in titles[title].total_list if c not in prev_chars]) + "```"
 
     @commands.command(pass_context=True, aliases=['msch'], brief="Set this channel to get info about your preferences")
     @commands.guild_only()
