@@ -283,11 +283,16 @@ class BelfastBot(commands.Bot):
         elif isinstance(error, discord.ext.commands.errors.NotOwner):
             await ctx.send("I am sorry, Commander! :no_entry:\nBut only my Master can give me this order.", delete_after=15)
         else:
-            error_log = str(type(error)) + "\n========================\n" + str(error) \
-                        + "\n========================\n" + \
+            error_log = "========================\n" \
+                        "Error type: " + str(type(error)) + \
+                        "\n========================\n" + \
+                        str(error) + \
+                        "\n========================\n" + \
                         str("".join(traceback.format_exception(type(error),
                                                                value=error,
-                                                               tb=error.__traceback__))).split("The above exception was the direct cause of the following")[0] + "\n"
+                                                               tb=error.__traceback__))).split(
+                            "The above exception was the direct cause of the following")[0] + \
+                        "\n========================\n"
             for arg in error.args:
                 error_log += "-arg- = " + arg + "\n"
             text = "Encountered an error, gathering data...\n"
