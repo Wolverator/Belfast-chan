@@ -5,6 +5,7 @@ import datetime
 import os
 import time
 import traceback
+from threading import Thread
 
 import discord
 from colorama import init, Fore
@@ -22,9 +23,9 @@ print("path: " + dir_path)
 description = "How can i help you, Commander?"
 config = configparser.ConfigParser()
 config.read(dir_path + "/config/config.ini")
-prefixes = ['Bel ', 'Belfast ', 'Belfast-chan ', 'Bel-chan ', 'Belchan ', 'bel ', 'belfast ', 'belfast-chan ', 'bel-chan ', 'belchan ']
+prefixes = ['Bel ', 'bel ', 'Belfast ', 'belfast ']
 
-cogs = ['cogs.AzurLane', 'cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.BelfastGame', 'cogs.MudaHelper']
+cogs = ['cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.Shikimori']
 
 
 # funcs
@@ -48,14 +49,13 @@ def create_if_not_exists(path_to_file_or_dir: str):
 
 class BelfastBot(commands.Bot):
     def __init__(self):
-        super().__init__(command_prefix=get_prefix, description=description, pm_help=None, help_attrs=dict(hidden=True))
+        super().__init__(command_prefix=get_prefix, description=description, pm_help=None, help_attrs=dict(hidden=True), member_cache_flags=discord.MemberCacheFlags.all(),
+                         intents=discord.Intents().all())
         self.awake_time = datetime.datetime.utcnow()
         self.owner_id = 560867880632320020
-        self.TigersMeadow = self.get_guild(566171342953512963)
+        self.MyGuild = self.get_guild(566171342953512963)
         self.HangOut = self.get_guild(230774538579869708)
-        self.MudaMaid15_id = 547713368396529664
-        self.MudaIgnoreNextMessage = {}
-        self.MudaMessagesToIgnore = []
+        self.silent_mode = False
         for extension in cogs:
             self.load_extension(extension)
 
@@ -96,69 +96,91 @@ class BelfastBot(commands.Bot):
             user = find(lambda m: m.display_name == some_user, guild.members)
         if user is None:
             user = find(lambda m: str(m) == some_user, guild.members)
-        if user is None and some_user.strip("@<>!").isdigit():
-            user = find(lambda m: m.id == int(some_user.strip("@<>!")), guild.members)
+        if user is None and not some_user.isdigit() and some_user.strip("@<>!").isdigit():
+            user = find(lambda m: int(m.id) == int(some_user.strip("@<>!")), guild.members)
+        if user is None:
+            user = guild.get_member(int(some_user))
         return user
 
-    @commands.Cog.listener()
-    async def on_message_edit(self, message_before, message_after):
-        if message_after.author.bot and message_after.author.id != self.MudaMaid15_id:
-            return
-        elif message_after.author.id == self.MudaMaid15_id:
-            if message_after.channel.id in self.MudaIgnoreNextMessage.keys() and self.MudaIgnoreNextMessage[message_after.channel.id]:
-                self.MudaIgnoreNextMessage[message_after.channel.id] = False
-                self.MudaMessagesToIgnore.append(message_after.id)
-            elif message_after.id not in self.MudaMessagesToIgnore:
-                # print(logtime()+ Fore.YELLOW +"processing MudaMesssage in"+ str(message_after.channel))
-                # if user checks adl
-                titl = self.get_mudatitle_from_ima(str(message_after.embeds[0].author.name))
-                # if message_after.embeds and str(message_after.embeds[0].author.name).__contains__("'s antidisablelist"):
-                # user = self.get_user_from_guild(message_after.guild, str(message_after.embeds[0].author.name).split("'s antidisablelist")[0])
-                # print(logtime() + Fore.YELLOW + "sending to MudaHelper TitleforUser... ")
-                # for title in message_after.embeds[0].description.split("\n"):
-                # if title and not str(title).__contains__("antidisabled characters"):
-                # self.get_cog('MudaHelper').add_ad_title_for_user(user.id, title.strip("*"))
-                # await message_after.add_reaction('<:AzurLane:569511684650041364>')
-                # if user scrolls title pages
-                # elif titl:
-                if titl:
-                    # print(logtime() + Fore.YELLOW + "sending to MudaHelper Characters... " + Fore.CYAN + titl)
-                    # await message_after.channel.send(message_after.embeds[0].description)
-                    result = self.get_cog('MudaHelper').add_characters_into_title(titl.strip(" "), str(message_after.embeds[0].author.name)[1 + len(titl):], message_after.embeds[0].description)
-                    #await message_after.channel.send(result, delete_after=15)
+    # @commands.Cog.listener()
+    # async def on_raw_message_delete(self, payload):
+    #     pass
+
+    # @commands.Cog.listener()
+    # async def on_message_edit(self, message_before, message_after):
+    #     pass
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.bot:  # and message.author.id!=self.MudaMaid15_id:
-            return
-        # elif message.author.id==self.MudaMaid15_id:
-        #     if message.embeds and str(message.embeds[0].author.name).__contains__("'s antidisablelist"):
-        #         user = self.get_user_from_guild(message.guild, str(message.embeds[0].author.name).split("'s antidisablelist")[0])
-        #         for title in message.embeds[0].description.replace("\d+ antidisabled characters\n\n","").split("\n"):
-        #             if title:
-        #                 await self.get_cog('MudaHelper').add_ad_title_for_user(user.id, title.strip("*"))
-        else:
+        if (message.channel.id == 569995241847914496):
+            await message.delete()
+            if (message.content == "Bel iam Commander"):
+                await message.author.add_roles(569993566311415809)
+                await message.author.remove_roles(569987757238386718)
+        elif message.author.id == 373267940008787969:
+            # if it's Terminator - just type it
             guild = ""
             author = ""
             if message.guild:
                 guild = Fore.GREEN + str(message.guild.name) + "|"
                 author = "|" + Fore.CYAN + str(message.author)
-            command = str(message.clean_content)
-            if command.startswith("$$ima") and len(command) > 5 and command[5] != 'w':
-                self.MudaIgnoreNextMessage[message.channel.id] = True
             print(logtime() + guild + Fore.YELLOW + str(message.channel) + author + ":" + Fore.RESET + message.clean_content)
-            if (message.clean_content.strip(" \n") == "@Belfast-chan#8997" and self.user in message.mentions) or (message.content + " ") in prefixes:
-                await message.channel.trigger_typing()
-                await asyncio.sleep(2)
-                if await self.is_owner(message.author):
-                    msg = await message.channel.send("Yes, Master?")
-                    await msg.delete(delay=15)
+        elif not message.author.bot:
+            # special commands from bot owner
+            if message.author.id == self.owner_id:
+                if str(message.clean_content).startswith("bel silentmode"):
+                    guild = ""
+                    author = ""
+                    if message.guild:
+                        guild = Fore.GREEN + str(message.guild.name) + "|"
+                        author = "|" + Fore.CYAN + str(message.author)
+                    print(logtime() + guild + Fore.YELLOW + str(message.channel) + author + ":" + Fore.RESET + message.clean_content)
+                    if str(message.clean_content).endswith("on"):
+                        self.silent_mode = True
+                        await self.change_presence(activity=None, status=discord.Status.invisible)
+                    elif str(message.clean_content).endswith("off"):
+                        self.silent_mode = False
+
+                        await self.change_presence(status=discord.Status.dnd, activity=discord.Game("Loading..."))
+                        await asyncio.sleep(3)
+                        await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
+                    return
+                if str(message.clean_content).startswith("bel reload cogs"):
+                    await message.add_reaction('🕑')
+                    if self.get_cog('BelfastGame') is not None:
+                        for pid in self.get_cog('BelfastGame').players.keys():
+                            await self.get_cog('BelfastGame').save_profile(pid)
+                    for extension in cogs:
+                        self.reload_extension(extension)
+
+                    await message.channel.send("Reloaded successfully, Master!", delete_after=15)
                     await message.delete(delay=15)
-                else:
-                    msg = await message.channel.send("How can i help you, Commander?\nFor 'help' command, please write `Bel info`.")
-                    await msg.delete(delay=25)
-                    await message.delete(delay=25)
-            await self.process_commands(message)
+                    return
+                if message.channel.id == 416694163179044874 and str(message.clean_content).startswith("$$w"):
+                    await message.delete()
+                    await message.channel.send("🚫 WRONG CHANNEL! 🚫 <@!560867880632320020> 🚫", delete_after=10)
+                    await asyncio.sleep(1)
+                    await message.channel.send("🚫 WRONG CHANNEL! 🚫 <@!560867880632320020> 🚫", delete_after=10)
+                    await asyncio.sleep(1)
+                    await message.channel.send("🚫 WRONG CHANNEL! 🚫 <@!560867880632320020> 🚫", delete_after=10)
+            # process users' messages
+            guild = ""
+            author = ""
+            if message.guild:
+                guild = Fore.GREEN + str(message.guild.name) + "|"
+                author = "|" + Fore.CYAN + str(message.author)
+            print(logtime() + guild + Fore.YELLOW + str(message.channel) + author + ":" + Fore.RESET + message.clean_content)
+            if not self.silent_mode:
+                if (message.clean_content.strip(" \n") == "@Belfast-chan#8997" and self.user in message.mentions) or (message.content + " ") in prefixes:
+                    await message.channel.trigger_typing()
+                    if await self.is_owner(message.author):
+                        await message.channel.send("Yes, Master?", delete_after=15)
+                        await message.delete(delay=15)
+                    else:
+                        await message.channel.send("How can i help you, Commander?\nFor the available commands list, please write `Bel help`.", delete_after=25)
+                        await message.delete(delay=25)
+                thread = Thread(await self.process_commands(message), daemon=True)
+                thread.run()
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
@@ -213,7 +235,7 @@ class BelfastBot(commands.Bot):
         except OSError as error:
             path = dir_path + "/servers/" + str(guild.id)
             print("Failed making '%s' folder" % path)
-            print(Fore.RED + error)
+            print(Fore.RED + str(error))
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
@@ -225,8 +247,8 @@ class BelfastBot(commands.Bot):
         self.process_guilds()
         print(logtime() + Fore.CYAN + "New member " + Fore.GREEN + str(
             member) + Fore.CYAN + " has joined guild: " + Fore.GREEN + member.guild.name)
-        if member.guild == self.TigersMeadow:
-            await member.add_roles(self.TigersMeadow.get_role(569987757238386718))
+        if member.guild.id == self.MyGuild.id:
+            await member.add_roles(self.MyGuild.get_role(569987757238386718), reason=None, atomic=True)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
@@ -238,35 +260,32 @@ class BelfastBot(commands.Bot):
     @commands.Cog.listener()
     async def on_connect(self):
         print(logtime() + Fore.GREEN + "Connected successfully!")
-        await self.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(name="loading..."))
+        if not self.silent_mode:
+            await self.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(name="Loading..."))
 
     @commands.Cog.listener()
     async def on_resume(self):
         print(logtime() + Fore.GREEN + "Connected restored successfully!")
-        await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
+        if not self.silent_mode:
+            await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
 
     @commands.Cog.listener()
     async def on_ready(self):
         self.process_guilds()
-        self.get_cog('MudaHelper').load()
-        await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
+        if not self.silent_mode:
+            await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
         print(Fore.GREEN + logtime() + "Ready to serve my Master!")
-        while self.is_ready():
-            from cogs.FinishedCommands import mt_reminder
-            await mt_reminder()
-            self.get_cog('MudaHelper').save()
-            await asyncio.sleep(180)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: discord.ext.commands.context, error):
         if isinstance(error, discord.ext.commands.errors.CommandNotFound):
-            await ctx.send("I am sorry, " + self.user_title(ctx.author.id) + "! :no_entry:\nBut this in unknown command.", delete_after=15)
+            return
         elif isinstance(error, discord.ext.commands.errors.NotOwner):
             await ctx.send("I am sorry, Commander! :no_entry:\nBut only my Master can give me this order.", delete_after=15)
         else:
             error_log = str(type(error)) + "\n========================\n" + str(error) \
                         + "\n========================\n" + \
-                        str("".join(traceback.format_exception(etype=type(error),
+                        str("".join(traceback.format_exception(type(error),
                                                                value=error,
                                                                tb=error.__traceback__))).split("The above exception was the direct cause of the following")[0] + "\n"
             for arg in error.args:
@@ -287,22 +306,12 @@ class BelfastBot(commands.Bot):
                                                  description=text + "\n\n" + str(error)))
             await ctx.message.delete(delay=30)
 
-    def get_mudatitle_from_ima(self, title_with_charnum: str) -> str:
-        import re
-        ending = re.search(re.compile(" [0-9]+/[0-9]+$"), title_with_charnum)
-        if ending:
-            # print(title_with_charnum[:ending.start()])
-            return title_with_charnum[:ending.start()]
-        else:
-            return ""
-
 
 if __name__ == '__main__':
     create_if_not_exists("/config")
     create_if_not_exists("/config/config.ini")
     create_if_not_exists("/config/last maintenance.txt")
     create_if_not_exists("/ALDB")
-    create_if_not_exists("/MudaDB")
     create_if_not_exists("/ALDB/ships")
     create_if_not_exists("/servers")
     create_if_not_exists("/suggests")
@@ -311,4 +320,5 @@ if __name__ == '__main__':
     create_if_not_exists("/logs")
     create_if_not_exists("/error_logs")
 
-    BelfastBot().run(config['Main']['token'], bot=True, reconnect=True)
+    bot = BelfastBot()
+    bot.run(config['Main']['token'], bot=True, reconnect=True)

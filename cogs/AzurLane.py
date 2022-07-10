@@ -2,10 +2,10 @@ import asyncio
 import codecs
 import datetime
 import os
+import urllib.request
 
 import discord
 import pandas
-import requests
 from colorama import Fore
 from discord.ext import commands
 
@@ -66,15 +66,14 @@ class AzurLane(commands.Cog):
     # finished funcs
     def update_html_file(self, path_to_html_file: str, _url: str):
         file_exists = os.path.exists(path_to_html_file)
-        if (not file_exists):  # or (file_exists and ((time.time() - os.path.getmtime(path_to_html_file)) > 1200 * 3600)):
+        if not file_exists:  # or (file_exists and ((time.time() - os.path.getmtime(path_to_html_file)) > 1200 * 3600)):
             print(logtime() + "URL update: " + _url)
-            web_info = requests.get(_url)
+            web_info = urllib.request.urlopen(_url)
             with codecs.open(path_to_html_file, mode='w', encoding='utf-8') as output_file:
-                output_file.write(str(web_info.text))
+                output_file.write(web_info.read().decode("utf-8"))
                 output_file.close()
-            info = pandas.read_html(path_to_html_file)
-            with open(path_to_html_file.replace(".html", ".txt"), 'w', encoding="utf8") as txt_file:
-                for item in pandas.read_html(requests.get(_url).content.decode()):
+            with open(path_to_html_file.replace(".html", ".txt"), 'w', encoding="utf-8") as txt_file:
+                for item in pandas.read_html(path_to_html_file):
                     txt_file.write(item.to_string() + '\n')
         return 1
 
@@ -105,7 +104,6 @@ class AzurLane(commands.Cog):
             await ctx.send(embed=emb)
 
     def get_ship_info_web(self, girl_name: str, author_id: id):
-        global new_wiki_style
         ship_name = self.fix_name(girl_name)
         resultEmbed = discord.Embed()
         print(">>>>>> " + ship_name)
@@ -142,7 +140,7 @@ class AzurLane(commands.Cog):
         elif ship_name.__contains__("Neptune") and dicts_info[1]['Construction'][6].__contains__("Neptunia"):
             ship_name = "HDN Neptune"
 
-        resultEmbed.set_thumbnail(url=self.get_cute_pic(girl_name))
+        resultEmbed.set_thumbnail(url=self.get_cute_pic(ship_name))
         resultEmbed.set_author(name="Link to wiki", url=shiplink)
         resultEmbed.title = ship_name.replace("_", " ")
         if len(dicts_info[0]) > 1 and str(dicts_info[0][0][0]).__contains__("Construction Time"):
@@ -205,7 +203,7 @@ class AzurLane(commands.Cog):
         url = 'https://azurlane.koumakan.jp/List_of_Ships_by_Class'
         self.update_html_file(path_to_file, url)
         web_raw = codecs.open(path_to_file, encoding='utf-8').read()
-        pic_url = ('https://azurlane.koumakan.jp' + web_raw.partition('<a href="/' + girl_name + '" title="' + girl_name + '">')[2]
+        pic_url = ('https://azurlane.koumakan.jp' + web_raw.partition('<a href="/' + girl_name + '" title="' + girl_name.replace('_', ' ') + '">')[2]
                    .partition('<img alt="" src="')[2].partition('/70px')[0]) \
             .replace('\%27', "'") \
             .replace('\%28', '(') \
@@ -223,6 +221,7 @@ class AzurLane(commands.Cog):
             .replace('_(battleship)', '_(Battleship)') \
             .replace('_battleship', '_(Battleship)') \
             .replace('_bb', '_(Battleship)') \
+            .replace("_bulin_custom_mkiii", "_Bulin_Custom_MKIII") \
             .replace("mkii", "MKII") \
             .replace("grosse", "Grosse") \
             .replace("virginia", "Virginia") \
@@ -267,7 +266,7 @@ class AzurLane(commands.Cog):
             .replace("Hieichan", "Hiei-chan") \
             .replace("Belchan", "Little_Bel") \
             .replace("triom", "Triom") \
-            .replace("bert", "Bert") \
+            .replace("_bert", "_Bert") \
             .replace("mars", "Mars") \
             .replace("bart", "Bart") \
             .replace("teme", "Teme") \
@@ -300,6 +299,11 @@ class AzurLane(commands.Cog):
             .replace("_shion", "_Shion") \
             .replace("_ayame", "_Ayame") \
             .replace("_fubuki", "_Fubuki") \
+            .replace("_degli_abruzzi", "_degli_Abruzzi") \
+            .replace("_jersey", "_Jersey") \
+            .replace("_m.sumner", "_M._Sumner") \
+            .replace("_m_sumner", "_M._Sumner") \
+            .replace("Allen_sumner", "Allen_M._Sumner") \
             .replace("_powell", "_Powell") \
             .replace("Opiniatre", "Opiniâtre")
         if ship_name == "Grosse":
@@ -310,7 +314,7 @@ class AzurLane(commands.Cog):
             ship_name = "Enterprise"
         return ship_name
 
-    def process_old_way(self, girl_name, resultEmbed, dicts_info):
+    def process_old_way(self, girl_name, result_embed, dicts_info):
         Retrofit = False
         Submarine = False
         for i in range(len(dicts_info)):
@@ -318,75 +322,75 @@ class AzurLane(commands.Cog):
                 Retrofit = True
         if dicts_info[1][1][2] == "Submarine" or dicts_info[1][1][2] == "Submarine Carrier":
             Submarine = True
-        resultEmbed.description = str(dicts_info[0][0][0]) + ": " + str(dicts_info[0][1][0]) + "\n"
-        resultEmbed.description += str(dicts_info[0][0][1]) + ": " + str(dicts_info[0][1][1]) + "\n"
-        resultEmbed.description += str(dicts_info[1][0][1]) + ": " + str(dicts_info[1][1][1]) + "\n"
-        resultEmbed.description += str(dicts_info[1][0][2]) + ": " + str(dicts_info[1][1][2]) + "\n"
+        result_embed.description = str(dicts_info[0][0][0]) + ": " + str(dicts_info[0][1][0]) + "\n"
+        result_embed.description += str(dicts_info[0][0][1]) + ": " + str(dicts_info[0][1][1]) + "\n"
+        result_embed.description += str(dicts_info[1][0][1]) + ": " + str(dicts_info[1][1][1]) + "\n"
+        result_embed.description += str(dicts_info[1][0][2]) + ": " + str(dicts_info[1][1][2]) + "\n"
         for i in range(len(dicts_info)):
             if "Obtainment" in dicts_info[i].keys() \
                     and not str(dicts_info[i]["Obtainment"][0]).startswith("Available in Medal Exchange for ") \
                     and not str(dicts_info[i]["Obtainment"][0]).startswith("Research"):
-                resultEmbed.description += "**LIMITED SHIP:** "
+                result_embed.description += "**LIMITED SHIP:** "
                 for j in range(len(dicts_info[i]["Obtainment"])):
-                    resultEmbed.description += str(dicts_info[i]["Obtainment"][j]).replace("Limited:", "\nLimited:") + "\n"
-        resultEmbed.description += "\n**Skills:**\n"
+                    result_embed.description += str(dicts_info[i]["Obtainment"][j]).replace("Limited:", "\nLimited:") + "\n"
+        result_embed.description += "\n**Skills:**\n"
         if Submarine:
-            resultEmbed.description += "**" + str(dicts_info[12]['Skills'][0]).split("CN:")[0] + "**: " + str(dicts_info[12]['Skills.1'][0]).strip("Barrage preview (gif)") + "\n"
+            result_embed.description += "**" + str(dicts_info[12]['Skills'][0]).split("CN:")[0] + "**: " + str(dicts_info[12]['Skills.1'][0]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[12]['Skills'][1]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[12]['Skills'][1]).split("CN:")[0] + "**: " + str(dicts_info[12]['Skills.1'][1]).strip("Barrage preview (gif)") + "\n"
+                result_embed.description += "**" + str(dicts_info[12]['Skills'][1]).split("CN:")[0] + "**: " + str(dicts_info[12]['Skills.1'][1]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[12]['Skills'][2]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[12]['Skills'][2]).split("CN:")[0] + "**: " + str(dicts_info[12]['Skills.1'][2]).strip("Barrage preview (gif)") + "\n"
+                result_embed.description += "**" + str(dicts_info[12]['Skills'][2]).split("CN:")[0] + "**: " + str(dicts_info[12]['Skills.1'][2]).strip("Barrage preview (gif)") + "\n"
         elif Retrofit:
-            resultEmbed.description += "**" + str(dicts_info[11]['Skills'][0]).split("CN:")[0] + "**: " + str(dicts_info[11]['Skills.1'][0]).strip("Barrage preview (gif)") + "\n"
+            result_embed.description += "**" + str(dicts_info[11]['Skills'][0]).split("CN:")[0] + "**: " + str(dicts_info[11]['Skills.1'][0]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[11]['Skills'][1]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[11]['Skills'][1]).split("CN:")[0] + "**: " + str(dicts_info[11]['Skills.1'][1]).strip("Barrage preview (gif)") + "\n"
+                result_embed.description += "**" + str(dicts_info[11]['Skills'][1]).split("CN:")[0] + "**: " + str(dicts_info[11]['Skills.1'][1]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[11]['Skills'][2]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[11]['Skills'][2]).split("CN:")[0] + "**: " + str(dicts_info[11]['Skills.1'][2]).strip("Barrage preview (gif)") + "\n"
+                result_embed.description += "**" + str(dicts_info[11]['Skills'][2]).split("CN:")[0] + "**: " + str(dicts_info[11]['Skills.1'][2]).strip("Barrage preview (gif)") + "\n"
         else:
-            resultEmbed.description += "**" + str(dicts_info[9]['Skills'][0]).split("CN:")[0] + "**: " + str(dicts_info[9]['Skills.1'][0]).strip("Barrage preview (gif)") + "\n"
+            result_embed.description += "**" + str(dicts_info[9]['Skills'][0]).split("CN:")[0] + "**: " + str(dicts_info[9]['Skills.1'][0]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[9]['Skills'][1]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[9]['Skills'][1]).split("CN:")[0] + "**: " + str(dicts_info[9]['Skills.1'][1]).strip("Barrage preview (gif)") + "\n"
+                result_embed.description += "**" + str(dicts_info[9]['Skills'][1]).split("CN:")[0] + "**: " + str(dicts_info[9]['Skills.1'][1]).strip("Barrage preview (gif)") + "\n"
             if str(dicts_info[9]['Skills'][2]) not in placeholders:
-                resultEmbed.description += "**" + str(dicts_info[9]['Skills'][2]).split("CN:")[0] + "**: " + str(dicts_info[9]['Skills.1'][2]).strip("Barrage preview (gif)") + "\n"
-        resultEmbed.description += "\nTo choose stats press reactions:\n1 - **1** lvl, 2 - **100** lvl, 3 - **120** lvl"
+                result_embed.description += "**" + str(dicts_info[9]['Skills'][2]).split("CN:")[0] + "**: " + str(dicts_info[9]['Skills.1'][2]).strip("Barrage preview (gif)") + "\n"
+        result_embed.description += "\nTo choose stats press reactions:\n1 - **1** lvl, 2 - **100** lvl, 3 - **120** lvl"
         if Retrofit and not Submarine:
-            resultEmbed.description += "\n  **RETROFITTABLE**: 4 - **100** lvl+**retro**, 5 - **120** lvl+**retro**\n"
+            result_embed.description += "\n  **RETROFITTABLE**: 4 - **100** lvl+**retro**, 5 - **120** lvl+**retro**\n"
         base = no_retro_type['base']
         if Retrofit and not Submarine:
             base = retro_type['base']
         if Submarine:
             base = submarine_type['base']
-        resultEmbed.add_field(name="Health", value=str(dicts_info[base][1][0]), inline=True)
-        resultEmbed.add_field(name="Firepower", value=str(dicts_info[base][1][1]), inline=True)
-        resultEmbed.add_field(name="Anti-air", value=str(dicts_info[base][1][2]), inline=True)
-        resultEmbed.add_field(name="Anti-sub", value=str(dicts_info[base][1][3]), inline=True)
-        resultEmbed.add_field(name="Armor", value=str(dicts_info[base][3][0]), inline=True)
-        resultEmbed.add_field(name="Torpedo", value=str(dicts_info[base][3][1]), inline=True)
-        resultEmbed.add_field(name="Aviation", value=str(dicts_info[base][3][2]), inline=True)
-        resultEmbed.add_field(name="Reload", value=str(dicts_info[base][5][0]), inline=True)
-        resultEmbed.add_field(name="Evasion", value=str(dicts_info[base][5][1]), inline=True)
-        resultEmbed.add_field(name="Cost", value=str(dicts_info[base][5][2]), inline=True)
-        resultEmbed.add_field(name="Luck", value=str(dicts_info[base][7][0]), inline=True)
-        resultEmbed.add_field(name="Speed", value=str(dicts_info[base][7][1]), inline=True)
-        resultEmbed.add_field(name="Accuracy", value=str(dicts_info[base][7][2]), inline=True)
-        return resultEmbed
+        result_embed.add_field(name="Health", value=str(dicts_info[base][1][0]), inline=True)
+        result_embed.add_field(name="Firepower", value=str(dicts_info[base][1][1]), inline=True)
+        result_embed.add_field(name="Anti-air", value=str(dicts_info[base][1][2]), inline=True)
+        result_embed.add_field(name="Anti-sub", value=str(dicts_info[base][1][3]), inline=True)
+        result_embed.add_field(name="Armor", value=str(dicts_info[base][3][0]), inline=True)
+        result_embed.add_field(name="Torpedo", value=str(dicts_info[base][3][1]), inline=True)
+        result_embed.add_field(name="Aviation", value=str(dicts_info[base][3][2]), inline=True)
+        result_embed.add_field(name="Reload", value=str(dicts_info[base][5][0]), inline=True)
+        result_embed.add_field(name="Evasion", value=str(dicts_info[base][5][1]), inline=True)
+        result_embed.add_field(name="Cost", value=str(dicts_info[base][5][2]), inline=True)
+        result_embed.add_field(name="Luck", value=str(dicts_info[base][7][0]), inline=True)
+        result_embed.add_field(name="Speed", value=str(dicts_info[base][7][1]), inline=True)
+        result_embed.add_field(name="Accuracy", value=str(dicts_info[base][7][2]), inline=True)
+        return result_embed
 
-    def process_new_way(self, girl_name, resultEmbed, dicts_info) -> discord.Embed:
+    def process_new_way(self, girl_name, result_embed, dicts_info) -> discord.Embed:
         Retrofit = False
         Submarine = False
-        resultEmbed.description = "Construction: " + str(dicts_info[1]['Construction'][0]).split('―')[0] + "\n"
-        resultEmbed.description += "Build: " + str(dicts_info[1]['Construction'][0]).replace('*', '').split('―')[1] + "\n"
-        resultEmbed.description += str(dicts_info[1]['Construction'][1]) + ": " + str(dicts_info[1]['Construction'][2]) + "\n"
-        resultEmbed.description += str(dicts_info[1]['Construction'][3]) + ": " + str(dicts_info[1]['Construction'][4]) + "\n"
-        resultEmbed.description += str(dicts_info[1]['Construction'][5]) + ": " + str(dicts_info[1]['Construction'][6]) + "\n"
+        result_embed.description = "Construction: " + str(dicts_info[1]['Construction'][0]).split('―')[0] + "\n"
+        result_embed.description += "Build: " + str(dicts_info[1]['Construction'][0]).replace('*', '').split('―')[1] + "\n"
+        result_embed.description += str(dicts_info[1]['Construction'][1]) + ": " + str(dicts_info[1]['Construction'][2]) + "\n"
+        result_embed.description += str(dicts_info[1]['Construction'][3]) + ": " + str(dicts_info[1]['Construction'][4]) + "\n"
+        result_embed.description += str(dicts_info[1]['Construction'][5]) + ": " + str(dicts_info[1]['Construction'][6]) + "\n"
         for i in range(len(dicts_info)):
             if "Obtainment" in dicts_info[i].keys() \
                     and not str(dicts_info[i]["Obtainment"][0]).startswith("Available in Medal Exchange for ") \
                     and not str(dicts_info[i]["Obtainment"][0]).startswith("Research"):
-                resultEmbed.description += "**LIMITED SHIP:** "
+                result_embed.description += "**LIMITED SHIP:** "
                 for j in range(len(dicts_info[i]["Obtainment"])):
-                    resultEmbed.description += str(dicts_info[i]["Obtainment"][j]).replace("Limited:", "\nLimited:") + "\n"
-        resultEmbed.description += "\n**Skills:**\n"
+                    result_embed.description += str(dicts_info[i]["Obtainment"][j]).replace("Limited:", "\nLimited:") + "\n"
+        result_embed.description += "\n**Skills:**\n"
         # if Submarine:
         #     resultEmbed.description += "**" + str(dicts_info[11]['Skills'][0]).split("CN:")[0] + "**: " + str(dicts_info[12]['Skills.1'][0]).strip("Barrage preview (gif)") + "\n"
         #     if str(dicts_info[12]['Skills'][1]) not in placeholders:
@@ -401,15 +405,15 @@ class AzurLane(commands.Cog):
         #         resultEmbed.description += "**" + str(dicts_info[10]['Skills'][2]).split("CN:")[0] + "**: " + str(dicts_info[11]['Skills.1'][2]).strip("Barrage preview (gif)") + "\n"
         # else:
         skill_key = dicts_info[8]['Skills'].keys()[0]
-        resultEmbed.description += "**" + str(dicts_info[8]['Skills'].keys()[0]).split("CN:")[0] + "**: " \
-                                   + str(dicts_info[8]['Skills'][skill_key][0]).strip("Barrage preview (gif)") + "\n"
+        result_embed.description += "**" + str(dicts_info[8]['Skills'].keys()[0]).split("CN:")[0] + "**: " \
+                                    + str(dicts_info[8]['Skills'][skill_key][0]).strip("Barrage preview (gif)") + "\n"
         if len(dicts_info[8]['Skills'][skill_key]) > 1 and str(dicts_info[8]['Skills'][skill_key][1]) not in placeholders:
-            resultEmbed.description += "**" + str(dicts_info[8]['Skills'][skill_key][1]).split("CN:")[0] + "**: " \
-                                       + str(dicts_info[8]['Skills'][skill_key][2]).strip("Barrage preview (gif)") + "\n"
+            result_embed.description += "**" + str(dicts_info[8]['Skills'][skill_key][1]).split("CN:")[0] + "**: " \
+                                        + str(dicts_info[8]['Skills'][skill_key][2]).strip("Barrage preview (gif)") + "\n"
         if len(dicts_info[8]['Skills'][skill_key]) > 3 and str(dicts_info[8]['Skills'][skill_key][3]) not in placeholders:
-            resultEmbed.description += "**" + str(dicts_info[8]['Skills'][skill_key][3]).split("CN:")[0] + "**: " \
-                                       + str(dicts_info[8]['Skills'][skill_key][4]).strip("Barrage preview (gif)") + "\n"
-        resultEmbed.description += "\nTo choose stats press reactions:\n1 - **1** lvl, 2 - **100** lvl, 3 - **120** lvl"
+            result_embed.description += "**" + str(dicts_info[8]['Skills'][skill_key][3]).split("CN:")[0] + "**: " \
+                                        + str(dicts_info[8]['Skills'][skill_key][4]).strip("Barrage preview (gif)") + "\n"
+        result_embed.description += "\nTo choose stats press reactions:\n1 - **1** lvl, 2 - **100** lvl, 3 - **120** lvl"
         # if Retrofit and not Submarine:
         #    resultEmbed.description += "\n  **RETROFITTABLE**: 4 - **100** lvl+**retro**, 5 - **120** lvl+**retro**\n"
         base = no_retro_type_new['base']
@@ -417,20 +421,20 @@ class AzurLane(commands.Cog):
         #     base = retro_type['base']
         # if Submarine:
         #     base = submarine_type['base']
-        resultEmbed.add_field(name="Health", value=str(dicts_info[base][1][0]), inline=True)
-        resultEmbed.add_field(name="Firepower", value=str(dicts_info[base][1][1]), inline=True)
-        resultEmbed.add_field(name="Anti-air", value=str(dicts_info[base][1][2]), inline=True)
-        resultEmbed.add_field(name="Luck", value=str(dicts_info[base][1][3]), inline=True)
-        resultEmbed.add_field(name="Anti-sub", value=str(dicts_info[base][1][4]), inline=True)
-        resultEmbed.add_field(name="Armor", value=str(dicts_info[base][3][0]), inline=True)
-        resultEmbed.add_field(name="Torpedo", value=str(dicts_info[base][3][1]), inline=True)
-        resultEmbed.add_field(name="Aviation", value=str(dicts_info[base][3][2]), inline=True)
-        resultEmbed.add_field(name="Accuracy", value=str(dicts_info[base][3][3]), inline=True)
-        resultEmbed.add_field(name="Reload", value=str(dicts_info[base][5][0]), inline=True)
-        resultEmbed.add_field(name="Evasion", value=str(dicts_info[base][5][1]), inline=True)
-        resultEmbed.add_field(name="Cost", value=str(dicts_info[base][5][2]), inline=True)
-        resultEmbed.add_field(name="Speed", value=str(dicts_info[base][5][3]), inline=True)
-        return resultEmbed
+        result_embed.add_field(name="Health", value=str(dicts_info[base][1][0]), inline=True)
+        result_embed.add_field(name="Firepower", value=str(dicts_info[base][1][1]), inline=True)
+        result_embed.add_field(name="Anti-air", value=str(dicts_info[base][1][2]), inline=True)
+        result_embed.add_field(name="Luck", value=str(dicts_info[base][1][3]), inline=True)
+        result_embed.add_field(name="Anti-sub", value=str(dicts_info[base][1][4]), inline=True)
+        result_embed.add_field(name="Armor", value=str(dicts_info[base][3][0]), inline=True)
+        result_embed.add_field(name="Torpedo", value=str(dicts_info[base][3][1]), inline=True)
+        result_embed.add_field(name="Aviation", value=str(dicts_info[base][3][2]), inline=True)
+        result_embed.add_field(name="Accuracy", value=str(dicts_info[base][3][3]), inline=True)
+        result_embed.add_field(name="Reload", value=str(dicts_info[base][5][0]), inline=True)
+        result_embed.add_field(name="Evasion", value=str(dicts_info[base][5][1]), inline=True)
+        result_embed.add_field(name="Cost", value=str(dicts_info[base][5][2]), inline=True)
+        result_embed.add_field(name="Speed", value=str(dicts_info[base][5][3]), inline=True)
+        return result_embed
 
 
 def setup(bot):
