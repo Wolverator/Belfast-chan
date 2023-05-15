@@ -68,7 +68,8 @@ class General(commands.Cog):
         await ctx.send("Yes, Master! Logging out...", delete_after=15)
         await self.bot.change_presence(activity=None, status=discord.Status.offline)
         await ctx.message.delete(delay=15)
-        await self.bot.get_cog('BelfastGame').save_world()
+        if self.bot.cogs.contains('cogs.BelfastGame'):
+            await self.bot.get_cog('BelfastGame').save_world()
         await self.bot.logout()
         await self.bot.close()
         print(logtime() + Fore.YELLOW + "Logged out!")

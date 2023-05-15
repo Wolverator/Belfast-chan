@@ -102,19 +102,12 @@ class BelfastBot(commands.Bot):
             user = guild.get_member(int(some_user))
         return user
 
-    # @commands.Cog.listener()
-    # async def on_raw_message_delete(self, payload):
-    #     pass
-
-    # @commands.Cog.listener()
-    # async def on_message_edit(self, message_before, message_after):
-    #     pass
-
     @commands.Cog.listener()
     async def on_message(self, message):
-        if (message.channel.id == 569995241847914496):
+        global cogs
+        if message.channel.id == 569995241847914496:
             await message.delete()
-            if (message.content == "Bel iam Commander"):
+            if message.content == "Bel iam Commander":
                 await message.author.add_roles(569993566311415809)
                 await message.author.remove_roles(569987757238386718)
         elif message.author.id == 373267940008787969:
@@ -147,12 +140,34 @@ class BelfastBot(commands.Bot):
                     return
                 if str(message.clean_content).startswith("bel reload cogs"):
                     await message.add_reaction('🕑')
-                    if self.get_cog('BelfastGame') is not None:
-                        for pid in self.get_cog('BelfastGame').players.keys():
-                            await self.get_cog('BelfastGame').save_profile(pid)
                     for extension in cogs:
                         self.reload_extension(extension)
 
+                    await message.remove_reaction('🕑', self.user)
+                    await message.channel.send("Reloaded successfully, Master!", delete_after=15)
+                    await message.delete(delay=15)
+                    return
+                if str(message.clean_content).startswith("bel get cogs"):
+                    await message.channel.send("Corrent cogs list:\n" + str(cogs), delete_after=15)
+                    await message.delete(delay=15)
+                    return
+                if str(message.clean_content).startswith("bel add cog "):
+                    await message.add_reaction('🕑')
+                    cog = "cogs." + message.clean_content[len("bel add cog "):]
+                    cogs.append(cog)
+                    self.load_extension(cog)
+                    for extension in cogs:
+                        self.reload_extension(extension)
+                    await message.channel.send("Reloaded successfully, Master!", delete_after=15)
+                    await message.delete(delay=15)
+                    return
+                if str(message.clean_content).startswith("bel remove cog "):
+                    await message.add_reaction('🕑')
+                    cog = "cogs." + message.clean_content[len("bel remove cog "):]
+                    cogs.remove(cog)
+                    self.unload_extension(cog)
+                    for extension in cogs:
+                        self.reload_extension(extension)
                     await message.channel.send("Reloaded successfully, Master!", delete_after=15)
                     await message.delete(delay=15)
                     return
@@ -247,8 +262,6 @@ class BelfastBot(commands.Bot):
         self.process_guilds()
         print(logtime() + Fore.CYAN + "New member " + Fore.GREEN + str(
             member) + Fore.CYAN + " has joined guild: " + Fore.GREEN + member.guild.name)
-        if member.guild.id == self.MyGuild.id:
-            await member.add_roles(self.MyGuild.get_role(569987757238386718), reason=None, atomic=True)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
@@ -327,3 +340,4 @@ if __name__ == '__main__':
 
     bot = BelfastBot()
     bot.run(config['Main']['token'], bot=True, reconnect=True)
+

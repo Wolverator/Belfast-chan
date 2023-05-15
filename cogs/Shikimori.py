@@ -34,7 +34,8 @@ class Anime:
         if self.totalScore > 0:
             tscore = "**" + str(self.totalScore) + "** "
         _title = self.title
-        if len(_title) > 35: _title = _title[:33] + "..."
+        if len(_title) > 35:
+            _title = _title[:33] + "..."
         return str(mscore + tscore + _title)
 
     def __init__(self, _id: int, title: str, status: str, myScore: int, totalScore: float, genres: list):
@@ -55,8 +56,7 @@ class Shikimori(commands.Cog):
         if os.path.exists(SHIKIMORI_ANIMES_FILEPATH):
             shikimoriAnimes = mpu.io.read(SHIKIMORI_ANIMES_FILEPATH)
 
-    @commands.command(pass_context=True, hidden=True)
-    @commands.is_owner()
+    @commands.command(pass_context=True)
     async def rain(self, ctx):
         embed = discord.Embed(title="RAINTIME", description="It's raining!", color=random.randint(0x000000, 0xFFFFFF))
         ed = await ctx.reply(embed=embed, mention_author=False)
@@ -66,21 +66,20 @@ class Shikimori(commands.Cog):
             await ed.edit(embed=embed)
         await ed.edit(embed=embed, delete_after=1)
 
-    @commands.command(pass_context=True, hidden=True)
-    @commands.is_owner()
+    @commands.command(pass_context=True)
     async def shikiFavGenres(self, ctx, *, nickname="Андрей Шерхан"):
         global shikimoriAnimes, missingAnimeIDs, stopFlag
         shikimoriTesetAnimes = {}
         id_as_str = ""
         # getting user ID from their nickname
         try:
-            id_as_str = (json.loads(requests.request("GET", "https://shikimori.one/api/users/" + urllib.parse.quote_plus(nickname), data="", headers={"User-Agent": "PyShiki"}).text))['id']
+            id_as_str = (json.loads(requests.request("GET", "https://shikimori.one/api/users/" + urllib.parse.quote_plus(nickname), data="", headers={"User-Agent": "Waifutsianism"}).text))['id']
         except KeyError:
             await ctx.send("No user with that nickname. Check spelling?")
             return
         await asyncio.sleep(1)  # to prevernt spamming queries
         # getting 'completed' anime list for user ID
-        response = json.loads(requests.request("GET", "https://shikimori.one/api/v2/user_rates", data="", headers={"User-Agent": "PyShiki"},
+        response = json.loads(requests.request("GET", "https://shikimori.one/api/v2/user_rates", data="", headers={"User-Agent": "Waifutsianism"},
                                                params={"user_id": id_as_str, "target_type": "Anime", "status": "completed"}).text)
         await asyncio.sleep(1)  # to prevernt spamming queries
         # checking for missing anime in list of known anime
@@ -107,7 +106,7 @@ class Shikimori(commands.Cog):
                     genres1.append(genr.get('name'))
 
                 R = random.Random()
-                delay = R.randint(2, 10)
+                delay = R.randint(1, 3)
                 await msg.edit(content=str("Finished requesting {0}/{1} anime...".format(i + 1, amount) +
                                            "\n**ID:** " + str(int(animeID)) +
                                            "\n**Name:** " + str(response.get('name')) +
@@ -118,23 +117,35 @@ class Shikimori(commands.Cog):
             await msg.delete()
 
         scores = {}
+        scores_number = {}
         # calculating genres scores
         for anime in shikimoriTesetAnimes.values():
             for genre in anime.genres:
                 if genre in scores.keys():
                     scores[genre] += anime.myScore
+                    scores_number[genre] += 1
                 else:
                     scores[genre] = anime.myScore
+                    scores_number[genre] = 1
 
         teset = sorted(scores.items(), key=lambda item: item[1], reverse=True)
-        result = str("**Top rated genres** of user **{0}**:".format(nickname))
+        result = str("**Top rated genres (additive)** of user **{0}**:".format(nickname))
         for i in range(10):
             if len(teset) > i:
-                result += "\n**{0})** ".format(i + 1) + str(teset[i][0]) + " = " + str(teset[i][1])
+                result += "\n**{0})** ".format(i + 1) + str(teset[i][0]) + " = **" + str(teset[i][1]) + "** from **{0}** item(s)".format(scores_number.get(teset[i][0]))
         await ctx.send(result)
 
-    @commands.command(pass_context=True, hidden=True)
-    @commands.is_owner()
+        mean_values = {}
+        for genre in scores.keys():
+            mean_values[genre] = scores.get(genre) / scores_number.get(genre)
+        teset2 = sorted(mean_values.items(), key=lambda item: item[1], reverse=True)
+        result2 = str("**Top rated genres (mean)** of user **{0}**:".format(nickname))
+        for i in range(10):
+            if len(teset2) > i:
+                result2 += "\n**{0})** ".format(i + 1) + str(teset2[i][0]) + " = **" + str(round(teset2[i][1], 2)) + "** from **{0}** item(s)".format(scores_number.get(teset2[i][0]))
+        await ctx.send(result2)
+
+    @commands.command(pass_context=True)
     async def shikiStop(self, ctx):
         global stopFlag
         stopFlag = True
@@ -143,7 +154,7 @@ class Shikimori(commands.Cog):
 
     def getAnime(self, animeID: int):
         global shikimoriAnimes
-        response = json.loads(requests.request("GET", "https://shikimori.one/api/animes/" + str(animeID), data="", headers={"User-Agent": "PyShiki"}).text)
+        response = json.loads(requests.request("GET", "https://shikimori.one/api/animes/" + str(animeID), data="", headers={"User-Agent": "Waifutsianism"}).text)
         genres1 = []
         for genr in response.get('genres'):
             genres1.append(genr.get('name'))
