@@ -561,5 +561,5 @@ class MudaHelper(commands.Cog):
         return emb
 
 
-def setup(bot):
-    bot.add_cog(MudaHelper(bot))
+async def setup(bot):
+    await bot.add_cog(MudaHelper(bot))

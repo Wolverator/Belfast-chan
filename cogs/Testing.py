@@ -5,119 +5,45 @@ import string
 import urllib.request
 
 import pandas
+from discord import File
 from discord.ext import commands
 from pandas import DataFrame, ExcelWriter
 
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
-description_pattern = "test description\n" \
-                      + "Health: **{0}/{1}**\nMoney: **{2}**GC **{3}**SS **{4}**P\nEncumb.: **{5}/{6}**"
 
 
 class Testing(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, hidden=True)
     @commands.is_owner()
-    async def pic(self, ctx):
-        await ctx.message.add_reaction('🕑')
+    async def send_arts(self, ctx):
+        arts = os.listdir("C:\\Users\\user\\Desktop\\арты")
+        i = 0
+        batch = []
+        while len(arts) > 0:
+            while i < 10:
+                if len(arts) > 0:
+                    batch.append(File("C:\\Users\\user\\Desktop\\арты\\" + arts.pop(0)))
+                    i += 1
+            await ctx.send(files=batch)
+            i = 0
+            batch = []
 
-        bgPic = "1.webp"
-        sprite1 = "2.webp"
-        sprite2 = "3.webp"
-        sprite3 = "4.webp"
-        sprite4 = "5.webp"
-        sprite5 = "6.webp"
-        sprite6 = "7.webp"
-
-        self.processPicsWithNoiseThreshold(bgPic, sprite1, 7, 7)
-        self.processPicsWithNoiseThreshold(bgPic, sprite2, 7, 7)
-        self.processPicsWithNoiseThreshold(bgPic, sprite3, 7, 7)
-        self.processPicsWithNoiseThreshold(bgPic, sprite4, 7, 7)
-        self.processPicsWithNoiseThreshold(bgPic, sprite5, 7, 7)
-        self.processPicsWithNoiseThreshold(bgPic, sprite6, 7, 7)
-
-        # await ctx.send(file=discord.File('new'+transparentPic))
-        await ctx.message.add_reaction('✅')
-        await ctx.message.remove_reaction('🕑', self.bot.user)
-        await ctx.message.delete(delay=15)
-
-    def processPicsWithNoiseThreshold(self, _bgPic, _spritePic, _noiseThreshold, _blur):
-        from PIL import Image, ImageChops, ImageFilter
-
-        bg = Image.open(_bgPic)
-        sprite = Image.open(_spritePic)
-        diff1 = ImageChops.difference(bg, sprite).convert('RGBA').filter(ImageFilter.GaussianBlur(_blur))
-        newimdata = []
-        transparent = (0, 0, 0, 0)
-        fillColor = (255, 0, 0, 255)
-        dat = diff1.getdata()
-        for color in dat:
-            if color[0] + color[1] + color[2] <= _noiseThreshold:
-                newimdata.append(transparent)
-            else:
-                newimdata.append(fillColor)
-        mask = Image.new('RGBA', diff1.size)
-        mask.putdata(newimdata)
-
-        ImageChops.composite(sprite, Image.new("RGBA", sprite.size, 0), mask) \
-            .save('new' + _spritePic.replace('.webp', '_' + str(_noiseThreshold) + '_' + str(_blur * 10) + '.webp'), exact=True, loseless=True, quality=100, method=6)
-
-        # original quality
-        sprite.save('0' + _spritePic.replace('.webp', '_0.png'))
-        # combined quality
-        ImageChops.composite(sprite, bg, mask) \
-            .save('0' + _spritePic.replace('.webp', '_' + str(_noiseThreshold) + '_' + str(_blur * 10) + '.png'), exact=True, loseless=True, quality=100, method=6)
-
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, hidden=True)
     @commands.is_owner()
-    async def lul(self, ctx):
-        await ctx.message.add_reaction('🕑')
+    async def channel(self, ctx, *, _id: int):
+        channel = self.bot.get_channel(_id)
+        await channel.send("You mean this channel?")
 
-        from PIL import Image
-
-        im1 = Image.open("9.webp")
-        im1.save("teset.webp", exact=True, loseless=True, quality=100, method=6)
-
-        await ctx.message.remove_reaction('🕑', self.bot.user)
-        await ctx.message.add_reaction('✅')
-        await ctx.message.delete(delay=15)
-
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, hidden=True)
     @commands.is_owner()
-    async def pc(self, ctx):
-        await ctx.message.add_reaction('🕑')
-        import discord
-        from PIL import Image, ImageChops
+    async def dm(self, ctx, *, _text: str):
+        user = await self.bot.fetch_user(_text.partition(' ')[0])
+        await user.send(_text.partition(' ')[2])
 
-        im1 = Image.open("9.webp")
-        im2 = Image.open("new9_7_70.webp")
-
-        diff1 = ImageChops.difference(im1, im2).convert('RGBA')
-
-        newimdata = []
-        transparent = (0, 0, 0, 0)
-        fillColor = (255, 0, 0, 255)
-        dat = diff1.getdata()
-        for color in dat:
-            if color[0] + color[1] + color[2] <= 2:
-                newimdata.append(transparent)
-            else:
-                newimdata.append(fillColor)
-        newim = Image.new('RGBA', diff1.size)
-        newim.putdata(newimdata)
-
-        newim.crop(newim.getbbox())
-        newim.save('diff.webp')
-
-        await ctx.send(file=discord.File("diff.webp"))
-
-        # await ctx.send(dat[0])
-        await ctx.message.remove_reaction('🕑', self.bot.user)
-        await ctx.message.add_reaction('✅')
-        await ctx.message.delete(delay=15)
-
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, hidden=True)
     @commands.is_owner()
     async def ggn(self, ctx):
         await ctx.message.add_reaction('🕑')
@@ -128,7 +54,7 @@ class Testing(commands.Cog):
 
         for f in os.listdir(path):
             file_path = os.path.join(path, f)
-            if os.path.isfile(file_path) and file_path.endswith(".xlsx") and not "~" in f:
+            if os.path.isfile(file_path) and file_path.endswith(".xlsx") and "~" not in f:
                 new_text_names = []
                 xls = pandas.ExcelFile(file_path)
                 df = xls.parse(0)
@@ -155,78 +81,10 @@ class Testing(commands.Cog):
         await ctx.message.add_reaction('✅')
         await ctx.message.delete(delay=15)
 
-    @commands.command(pass_context=True)
-    @commands.is_owner()
-    async def ts(self, ctx):
-        await ctx.channel.trigger_typing()
-        path = "D:\\Misc\\VNs\\Grisaia 1 debug\\translate here\\clean texts"
-        WRITE_TRANSLATION_HERE = "(write translation here)"
-        com_total = 0
-        com_trans = 0
-        ama_total = 0
-        ama_trans = 0
-        mak_total = 0
-        mak_trans = 0
-        mic_total = 0
-        mic_trans = 0
-        sac_total = 0
-        sac_trans = 0
-        yum_total = 0
-        yum_trans = 0
-
-        for f in os.listdir(path):
-            file_path = os.path.join(path, f)
-            if os.path.isfile(file_path) and file_path.endswith(".xlsx") and not "~" in f:
-                xls = pandas.ExcelFile(file_path)
-                df = xls.parse(0)
-                text_lines = list(df[df.columns[2]]).copy()
-                # result += "op.xlsx has " + str(f[:2]) + " lines"
-                while len(text_lines) > 0:
-                    text_lines.pop(0)
-                    translated = 0
-                    if not text_lines.pop(0) == WRITE_TRANSLATION_HERE:
-                        translated = 1
-                    match f[:2]:
-                        case "op" | "co":
-                            com_total += 1
-                            com_trans += translated
-                        case "am":
-                            ama_total += 1
-                            ama_trans += translated
-                        case "ma":
-                            mak_total += 1
-                            mak_trans += translated
-                        case "mi":
-                            mic_total += 1
-                            mic_trans += translated
-                        case "sa":
-                            sac_total += 1
-                            sac_trans += translated
-                        case "yu":
-                            yum_total += 1
-                            yum_trans += translated
-                        case _:
-                            pass
-
-        result = "**Прогресс перевода Grisaia no Kajitsu:**" \
-                 + "\nОбщий: {0}/{1} строк, **{2}%**".format(com_trans, com_total, round((com_trans / com_total) * 100, 2))
-        result += "\nАмане: {0}/{1} строк, **{2}%**".format(ama_trans, ama_total, round((ama_trans / ama_total) * 100, 2))
-        result += "\nМакина: {0}/{1} строк, **{2}%**".format(mak_trans, mak_total, round((mak_trans / mak_total) * 100, 2))
-        result += "\nМичиру: {0}/{1} строк, **{2}%**".format(mic_trans, mic_total, round((mic_trans / mic_total) * 100, 2))
-        result += "\nСачи: {0}/{1} строк, **{2}%**".format(sac_trans, sac_total, round((sac_trans / sac_total) * 100, 2))
-        result += "\nЮмико: {0}/{1} строк, **{2}%**".format(yum_trans, yum_total, round((yum_trans / yum_total) * 100, 2))
-        sum_trans = ama_trans + com_trans + mak_trans + mic_trans + sac_trans + yum_trans
-        sum_total = ama_total + com_total + mak_total + mic_total + sac_total + yum_total
-        result += "\n\nИтого: {0}/{1} строк, **{2}%**".format(sum_trans, sum_total, round((sum_trans / sum_total) * 100, 2))
-
-        result += "\n{0}".format(str(datetime.datetime.now()).split('.')[0])
-        await ctx.send(result)
-        await ctx.message.delete(delay=5)
-
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, hidden=True)
     @commands.is_owner()
     async def tsen(self, ctx):
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         path = "D:\\Misc\\VNs\\Grisaia 1 debug\\translate here\\clean texts"
         WRITE_TRANSLATION_HERE = "(write translation here)"
         com_total = 0
@@ -244,7 +102,7 @@ class Testing(commands.Cog):
 
         for f in os.listdir(path):
             file_path = os.path.join(path, f)
-            if os.path.isfile(file_path) and file_path.endswith(".xlsx") and not "~" in f:
+            if os.path.isfile(file_path) and file_path.endswith(".xlsx") and "~" not in f:
                 xls = pandas.ExcelFile(file_path)
                 df = xls.parse(0)
                 text_lines = list(df[df.columns[2]]).copy()
@@ -291,10 +149,10 @@ class Testing(commands.Cog):
         await ctx.send(result)
         await ctx.message.delete(delay=5)
 
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, hidden=True)
     @commands.is_owner()
     async def tsw(self, ctx):
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         path = "D:\\Misc\\VNs\\Grisaia 1 debug\\translate here\\clean texts"
         WRITE_TRANSLATION_HERE = "(write translation here)"
         com_total = 0
@@ -312,7 +170,7 @@ class Testing(commands.Cog):
 
         for f in os.listdir(path):
             file_path = os.path.join(path, f)
-            if os.path.isfile(file_path) and file_path.endswith(".xlsx") and not "~" in f:
+            if os.path.isfile(file_path) and file_path.endswith(".xlsx") and "~" not in f:
                 xls = pandas.ExcelFile(file_path)
                 df = xls.parse(0)
                 text_lines = list(df[df.columns[2]]).copy()
@@ -361,7 +219,7 @@ class Testing(commands.Cog):
         await ctx.send(result)
         await ctx.message.delete(delay=5)
 
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, hidden=True)
     @commands.is_owner()
     async def sao(self, ctx):
         template = "https://9bc-a3e-2200g0.streamalloha.live/hs/46/1657661945/XHT7pydqrti9LmT6SG_J5A/395/628395/seg-{0}-f2-v1-f5-a1.ts"
@@ -385,7 +243,7 @@ class Testing(commands.Cog):
         await msg.delete()
         await ctx.send("Done!")
 
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, hidden=True)
     @commands.is_owner()
     async def translatecommonphrases(self, ctx):
         lines = {}
@@ -405,7 +263,7 @@ class Testing(commands.Cog):
         for f in os.listdir(path):
             lines_text = []
             file_path = os.path.join(path, f)
-            if os.path.isfile(file_path) and file_path.endswith(".xlsx") and not "~" in f:
+            if os.path.isfile(file_path) and file_path.endswith(".xlsx") and "~" not in f:
                 xls = pandas.ExcelFile(file_path)
                 df = xls.parse(0)
                 text_lines = list(df[df.columns[2]]).copy()
@@ -420,10 +278,10 @@ class Testing(commands.Cog):
                             lines[line] = lines[line] + 1
 
                         try:
-                            if (None == re.search('[a-zA-Z]', line)):
+                            if re.search('[a-zA-Z]', line) is None:
                                 lines_text.append(line)
                                 lines_text.append(line)
-                            elif (line in lines_to_translate.keys()):
+                            elif line in lines_to_translate.keys():
                                 lines_text.append(line)
                                 lines_text.append(lines_to_translate[line])
                             else:
@@ -453,7 +311,7 @@ class Testing(commands.Cog):
         for w in sorted(lines, key=lines.get, reverse=True):
             if i < 20:
                 i += 1
-                result_text += str(i) + ")`" + str(w) + "` = " + str(lines[w]) + str(None == re.search('[a-zA-Z]', w)) + "\n"
+                result_text += str(i) + ")`" + str(w) + "` = " + str(lines[w]) + str(re.search('[a-zA-Z]', w) is None) + "\n"
         await ctx.send(result_text)
 
     def translateName(self, _name: str) -> str:
@@ -635,5 +493,5 @@ class Testing(commands.Cog):
         return new_name
 
 
-def setup(bot):
-    bot.add_cog(Testing(bot))
+async def setup(bot):
+    await bot.add_cog(Testing(bot))

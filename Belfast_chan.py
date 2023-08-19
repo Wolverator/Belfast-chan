@@ -25,7 +25,7 @@ config = configparser.ConfigParser()
 config.read(dir_path + "/config/config.ini")
 prefixes = ['Bel ', 'bel ', 'Belfast ', 'belfast ']
 
-cogs = ['cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.Shikimori']
+cogs = ['cogs.FinishedCommands', 'cogs.BelfastUtils', 'cogs.Testing', 'cogs.Shikimori', 'cogs.StableDiffusion']
 
 
 # funcs
@@ -56,8 +56,6 @@ class BelfastBot(commands.Bot):
         self.MyGuild = self.get_guild(566171342953512963)
         self.HangOut = self.get_guild(230774538579869708)
         self.silent_mode = False
-        for extension in cogs:
-            self.load_extension(extension)
 
     def process_guilds(self):
         for guild in self.guilds:
@@ -90,7 +88,7 @@ class BelfastBot(commands.Bot):
         else:
             return "Commander"
 
-    def get_user_from_guild(self, guild: discord.Guild, some_user: str) -> discord.User:
+    def get_user_from_guild(self, guild: discord.Guild, some_user: str) -> discord.Member:
         user = find(lambda m: m.name == some_user, guild.members)
         if user is None:
             user = find(lambda m: m.display_name == some_user, guild.members)
@@ -105,12 +103,7 @@ class BelfastBot(commands.Bot):
     @commands.Cog.listener()
     async def on_message(self, message):
         global cogs
-        if message.channel.id == 569995241847914496:
-            await message.delete()
-            if message.content == "Bel iam Commander":
-                await message.author.add_roles(569993566311415809)
-                await message.author.remove_roles(569987757238386718)
-        elif message.author.id == 373267940008787969:
+        if message.author.id == 373267940008787969:
             # if it's Terminator - just type it
             guild = ""
             author = ""
@@ -141,7 +134,7 @@ class BelfastBot(commands.Bot):
                 if str(message.clean_content).startswith("bel reload cogs"):
                     await message.add_reaction('🕑')
                     for extension in cogs:
-                        self.reload_extension(extension)
+                        await self.reload_extension(extension)
 
                     await message.remove_reaction('🕑', self.user)
                     await message.channel.send("Reloaded successfully, Master!", delete_after=15)
@@ -155,9 +148,9 @@ class BelfastBot(commands.Bot):
                     await message.add_reaction('🕑')
                     cog = "cogs." + message.clean_content[len("bel add cog "):]
                     cogs.append(cog)
-                    self.load_extension(cog)
+                    await self.load_extension(cog)
                     for extension in cogs:
-                        self.reload_extension(extension)
+                        await self.reload_extension(extension)
                     await message.channel.send("Reloaded successfully, Master!", delete_after=15)
                     await message.delete(delay=15)
                     return
@@ -165,9 +158,9 @@ class BelfastBot(commands.Bot):
                     await message.add_reaction('🕑')
                     cog = "cogs." + message.clean_content[len("bel remove cog "):]
                     cogs.remove(cog)
-                    self.unload_extension(cog)
+                    await self.unload_extension(cog)
                     for extension in cogs:
-                        self.reload_extension(extension)
+                        await self.reload_extension(extension)
                     await message.channel.send("Reloaded successfully, Master!", delete_after=15)
                     await message.delete(delay=15)
                     return
@@ -181,13 +174,18 @@ class BelfastBot(commands.Bot):
             # process users' messages
             guild = ""
             author = ""
+            channel = ""
             if message.guild:
                 guild = Fore.GREEN + str(message.guild.name) + "|"
-                author = "|" + Fore.CYAN + str(message.author)
-            print(logtime() + guild + Fore.YELLOW + str(message.channel) + author + ":" + Fore.RESET + message.clean_content)
+                channel = Fore.YELLOW + str(message.channel) + "|"
+                author = Fore.CYAN + str(message.author)
+            else:
+                channel = Fore.YELLOW + "DM from "
+                author = Fore.CYAN + str(message.author)
+            print(logtime() + guild + channel + author + ":" + Fore.RESET + message.clean_content)
             if not self.silent_mode:
                 if (message.clean_content.strip(" \n") == "@Belfast-chan#8997" and self.user in message.mentions) or (message.content + " ") in prefixes:
-                    await message.channel.trigger_typing()
+                    await message.channel.typing()
                     if await self.is_owner(message.author):
                         await message.channel.send("Yes, Master?", delete_after=15)
                         await message.delete(delay=15)
@@ -285,6 +283,11 @@ class BelfastBot(commands.Bot):
     @commands.Cog.listener()
     async def on_ready(self):
         self.process_guilds()
+        for extension in cogs:
+            if extension not in self.extensions:
+                await self.load_extension(extension)
+            else:
+                await self.reload_extension(extension)
         if not self.silent_mode:
             await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
         print(Fore.GREEN + logtime() + "Ready to serve my Master!")
@@ -295,6 +298,8 @@ class BelfastBot(commands.Bot):
             return
         elif isinstance(error, discord.ext.commands.errors.NotOwner):
             await ctx.send("I am sorry, Commander! :no_entry:\nBut only my Master can give me this order.", delete_after=15)
+        elif isinstance(error, discord.ext.commands.errors.NSFWChannelRequired):
+            await ctx.send("I am sorry, Commander! :no_entry:\nBut I can not do this outside NSFW channels.", delete_after=15)
         else:
             error_log = "========================\n" \
                         "Error type: " + str(type(error)) + \
@@ -309,7 +314,19 @@ class BelfastBot(commands.Bot):
             for arg in error.args:
                 error_log += "-arg- = " + arg + "\n"
             text = "Encountered an error, gathering data...\n"
-            text += "Discord guild: `" + ctx.message.guild.name + "`\nChannel: `" + ctx.message.channel.name + "`\nUser: `" + ctx.message.author.display_name + "`\n"
+
+            guild = ""
+            author = ""
+            channel = ""
+            if ctx.message.guild:
+                guild = str(ctx.message.guild.name)
+                channel = str(ctx.message.channel)
+                author = str(ctx.message.author)
+            else:
+                channel = "DM from "
+                author = str(ctx.message.author)
+
+            text += "Discord guild: `" + guild + "`\nChannel: `" + channel + "`\nUser: `" + author + "`\n"
             text += "Error-causing message text: `" + ctx.message.clean_content + "`\n"
             text += "Logging...\n"
             filename = "/error_logs/error_log_" + str(time.time()) + ".txt"
@@ -339,5 +356,4 @@ if __name__ == '__main__':
     create_if_not_exists("/error_logs")
 
     bot = BelfastBot()
-    bot.run(config['Main']['token'], bot=True, reconnect=True)
-
+    bot.run(config['Main']['token'], reconnect=True)

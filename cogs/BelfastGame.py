@@ -1155,5 +1155,5 @@ def get_reload_time(reload_stat: int):
     return math.log(reload_stat, 1.15)
 
 
-def setup(bot):
-    bot.add_cog(BelfastGame(bot))
+async def setup(bot):
+    await bot.add_cog(BelfastGame(bot))

@@ -57,16 +57,6 @@ class Shikimori(commands.Cog):
             shikimoriAnimes = mpu.io.read(SHIKIMORI_ANIMES_FILEPATH)
 
     @commands.command(pass_context=True)
-    async def rain(self, ctx):
-        embed = discord.Embed(title="RAINTIME", description="It's raining!", color=random.randint(0x000000, 0xFFFFFF))
-        ed = await ctx.reply(embed=embed, mention_author=False)
-        for i in range(10):
-            await asyncio.sleep(1)
-            embed = discord.Embed(title="RAINTIME", description="It's raining!", color=random.randint(0x000000, 0xFFFFFF))
-            await ed.edit(embed=embed)
-        await ed.edit(embed=embed, delete_after=1)
-
-    @commands.command(pass_context=True)
     async def shikiFavGenres(self, ctx, *, nickname="Андрей Шерхан"):
         global shikimoriAnimes, missingAnimeIDs, stopFlag
         shikimoriTesetAnimes = {}
@@ -207,5 +197,5 @@ class Shikimori(commands.Cog):
         return emb
 
 
-def setup(bot):
-    bot.add_cog(Shikimori(bot))
+async def setup(bot):
+    await bot.add_cog(Shikimori(bot))

@@ -437,5 +437,5 @@ class AzurLane(commands.Cog):
         return result_embed
 
 
-def setup(bot):
-    bot.add_cog(AzurLane(bot))
+async def setup(bot):
+    await bot.add_cog(AzurLane(bot))
