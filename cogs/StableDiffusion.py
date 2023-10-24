@@ -105,7 +105,7 @@ class StableDiffusion(commands.Cog):
             },
             "negative_prompt": "(badHands3, verybadimagenegative_v1.3:0.7),"
                                "(extra fingers, deformed hands, deformed iris, deformed pupils, bad eyes, polydactyl:1.5),"
-                               "(Worst Quality, Low Quality:1.3),"
+                               "(Worst Quality, Low Quality:1.2),"
                                "(Blurry, Blur:1.2),"
                                "(artist name, watermark, signature:1.3),"
                                "(loli, children, child, baby, baby face:1.333)"
