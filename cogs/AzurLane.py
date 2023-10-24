@@ -12,7 +12,7 @@ from discord.ext import commands
 from cogs.BelfastUtils import logtime
 
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
-no_retro_type_new = {'120': 5, '100': 6, 'base': 7}
+no_retro_type_new = {'120': 1, '100': 2, 'base': 3}
 no_retro_type = {'120': 3, '100': 4, 'base': 5}
 submarine_type = {'120': 3, '100': 5, 'base': 7}
 retro_type = {'120r': 3, '120': 4, '100r': 5, '100': 6, 'base': 7}
@@ -26,7 +26,7 @@ class AzurLane(commands.Cog):
 
     @commands.command(pass_context=True, aliases=['ship'], brief="Show girl's info from official Wiki")
     async def info(self, ctx, *, girl_name="placeholderLVL99999"):
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         if girl_name.__contains__("placeholderLVL99999"):
             resultEmbed = discord.Embed()
             resultEmbed.title = "Excuse me, but..."
@@ -54,7 +54,7 @@ class AzurLane(commands.Cog):
                       'retro': 3,
                       'retrofit': 3, 'retrofits': 3}
         sorts = {'nation': 0, 'nations': 0, 'type': 1, 'types': 1, 'rarity': 2}
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         if category and category in categories and sort_by and sort_by in sorts:
             await self.bot.get_cog('AzurLane').get_ships_list(ctx, categories.get(category), sorts.get(sort_by))
         else:
@@ -83,7 +83,7 @@ class AzurLane(commands.Cog):
         colum = columns.get(column)
         resultEmbed = discord.Embed()
         resultEmbed.title = tables.get(table) + " ships:"
-        _url = "https://azurlane.koumakan.jp/List_of_Ships"
+        _url = "https://azurlane.koumakan.jp/wiki/List_of_Ships"
         path_to_html_file = dir_path + 'ALDB/List_of_Ships.html'
         ship_types = {}
         file_result = self.update_html_file(path_to_html_file, _url)
@@ -110,7 +110,7 @@ class AzurLane(commands.Cog):
         path_to_file = dir_path + 'ALDB/ships/' + ship_name + '.html'
 
         try:
-            shiplink = 'https://azurlane.koumakan.jp/' + ship_name
+            shiplink = 'https://azurlane.koumakan.jp/wiki/' + ship_name
             self.update_html_file(path_to_file, shiplink)
         except ImportError:
             resultEmbed.title = "Excuse me, but..."
@@ -135,9 +135,9 @@ class AzurLane(commands.Cog):
             file_i.write(dicts_info[i].to_string() + "\n")
         file_i.close()
 
-        if ship_name.__contains__("Neptune") and dicts_info[1]['Construction'][6].__contains__("Royal Navy"):
+        if ship_name.__contains__("Neptune") and dicts_info[0][0][6].__contains__("Royal Navy"):
             ship_name = "HMS Neptune"
-        elif ship_name.__contains__("Neptune") and dicts_info[1]['Construction'][6].__contains__("Neptunia"):
+        elif ship_name.__contains__("Neptune") and dicts_info[0][0][6].__contains__("Neptunia"):
             ship_name = "HDN Neptune"
 
         resultEmbed.set_thumbnail(url=self.get_cute_pic(ship_name))
@@ -200,11 +200,11 @@ class AzurLane(commands.Cog):
 
     def get_cute_pic(self, girl_name):
         path_to_file = dir_path + 'ALDB/List_of_Ships_by_Class.html'
-        url = 'https://azurlane.koumakan.jp/List_of_Ships_by_Class'
+        url = 'https://azurlane.koumakan.jp/wiki/List_of_Ships_by_Class'
         self.update_html_file(path_to_file, url)
         web_raw = codecs.open(path_to_file, encoding='utf-8').read()
-        pic_url = ('https://azurlane.koumakan.jp' + web_raw.partition('<a href="/' + girl_name + '" title="' + girl_name.replace('_', ' ') + '">')[2]
-                   .partition('<img alt="" src="')[2].partition('/70px')[0]) \
+        pic_url = (web_raw.partition('<a href="/wiki/' + girl_name + '" title="' + girl_name.replace('_', ' ') + '">')[2]
+        .partition('<img alt="" src="')[2].partition('/70px')[0]) \
             .replace('\%27', "'") \
             .replace('\%28', '(') \
             .replace('\%29', ')') \
@@ -378,19 +378,19 @@ class AzurLane(commands.Cog):
     def process_new_way(self, girl_name, result_embed, dicts_info) -> discord.Embed:
         Retrofit = False
         Submarine = False
-        result_embed.description = "Construction: " + str(dicts_info[1]['Construction'][0]).split('―')[0] + "\n"
-        result_embed.description += "Build: " + str(dicts_info[1]['Construction'][0]).replace('*', '').split('―')[1] + "\n"
-        result_embed.description += str(dicts_info[1]['Construction'][1]) + ": " + str(dicts_info[1]['Construction'][2]) + "\n"
-        result_embed.description += str(dicts_info[1]['Construction'][3]) + ": " + str(dicts_info[1]['Construction'][4]) + "\n"
-        result_embed.description += str(dicts_info[1]['Construction'][5]) + ": " + str(dicts_info[1]['Construction'][6]) + "\n"
-        for i in range(len(dicts_info)):
-            if "Obtainment" in dicts_info[i].keys() \
-                    and not str(dicts_info[i]["Obtainment"][0]).startswith("Available in Medal Exchange for ") \
-                    and not str(dicts_info[i]["Obtainment"][0]).startswith("Research"):
-                result_embed.description += "**LIMITED SHIP:** "
-                for j in range(len(dicts_info[i]["Obtainment"])):
-                    result_embed.description += str(dicts_info[i]["Obtainment"][j]).replace("Limited:", "\nLimited:") + "\n"
-        result_embed.description += "\n**Skills:**\n"
+
+        result_embed.description = str(dicts_info[0][0][0]) + ": " + str(dicts_info[0][1][0]) + "\n"
+        result_embed.description += str(dicts_info[0][0][1]) + ": " + str(dicts_info[0][1][1]) + "\n"
+        result_embed.description += str(dicts_info[0][0][2]) + ": " + str(dicts_info[0][1][2]) + "\n"
+        result_embed.description += str(dicts_info[0][0][3]) + ": " + str(dicts_info[0][1][3]) + "\n"
+        # for i in range(len(dicts_info)):
+        #     if "Obtainment" in dicts_info[i].keys() \
+        #             and not str(dicts_info[i]["Obtainment"][0]).startswith("Available in Medal Exchange for ") \
+        #             and not str(dicts_info[i]["Obtainment"][0]).startswith("Research"):
+        #         result_embed.description += "**LIMITED SHIP:** "
+        #         for j in range(len(dicts_info[i]["Obtainment"])):
+        #             result_embed.description += str(dicts_info[i]["Obtainment"][j]).replace("Limited:", "\nLimited:") + "\n"
+        # result_embed.description += "\n**Skills:**\n"
         # if Submarine:
         #     resultEmbed.description += "**" + str(dicts_info[11]['Skills'][0]).split("CN:")[0] + "**: " + str(dicts_info[12]['Skills.1'][0]).strip("Barrage preview (gif)") + "\n"
         #     if str(dicts_info[12]['Skills'][1]) not in placeholders:
@@ -404,16 +404,16 @@ class AzurLane(commands.Cog):
         #     if str(dicts_info[11]['Skills'][2]) not in placeholders:
         #         resultEmbed.description += "**" + str(dicts_info[10]['Skills'][2]).split("CN:")[0] + "**: " + str(dicts_info[11]['Skills.1'][2]).strip("Barrage preview (gif)") + "\n"
         # else:
-        skill_key = dicts_info[8]['Skills'].keys()[0]
-        result_embed.description += "**" + str(dicts_info[8]['Skills'].keys()[0]).split("CN:")[0] + "**: " \
-                                    + str(dicts_info[8]['Skills'][skill_key][0]).strip("Barrage preview (gif)") + "\n"
-        if len(dicts_info[8]['Skills'][skill_key]) > 1 and str(dicts_info[8]['Skills'][skill_key][1]) not in placeholders:
-            result_embed.description += "**" + str(dicts_info[8]['Skills'][skill_key][1]).split("CN:")[0] + "**: " \
-                                        + str(dicts_info[8]['Skills'][skill_key][2]).strip("Barrage preview (gif)") + "\n"
-        if len(dicts_info[8]['Skills'][skill_key]) > 3 and str(dicts_info[8]['Skills'][skill_key][3]) not in placeholders:
-            result_embed.description += "**" + str(dicts_info[8]['Skills'][skill_key][3]).split("CN:")[0] + "**: " \
-                                        + str(dicts_info[8]['Skills'][skill_key][4]).strip("Barrage preview (gif)") + "\n"
-        result_embed.description += "\nTo choose stats press reactions:\n1 - **1** lvl, 2 - **100** lvl, 3 - **120** lvl"
+        # skill_key = dicts_info[8]['Skills'].keys()[0]
+        # result_embed.description += "**" + str(dicts_info[8]['Skills'].keys()[0]).split("CN:")[0] + "**: " \
+        #                             + str(dicts_info[8]['Skills'][skill_key][0]).strip("Barrage preview (gif)") + "\n"
+        # if len(dicts_info[8]['Skills'][skill_key]) > 1 and str(dicts_info[8]['Skills'][skill_key][1]) not in placeholders:
+        #     result_embed.description += "**" + str(dicts_info[8]['Skills'][skill_key][1]).split("CN:")[0] + "**: " \
+        #                                 + str(dicts_info[8]['Skills'][skill_key][2]).strip("Barrage preview (gif)") + "\n"
+        # if len(dicts_info[8]['Skills'][skill_key]) > 3 and str(dicts_info[8]['Skills'][skill_key][3]) not in placeholders:
+        #     result_embed.description += "**" + str(dicts_info[8]['Skills'][skill_key][3]).split("CN:")[0] + "**: " \
+        #                                 + str(dicts_info[8]['Skills'][skill_key][4]).strip("Barrage preview (gif)") + "\n"
+        # result_embed.description += "\nTo choose stats press reactions:\n1 - **1** lvl, 2 - **100** lvl, 3 - **120** lvl"
         # if Retrofit and not Submarine:
         #    resultEmbed.description += "\n  **RETROFITTABLE**: 4 - **100** lvl+**retro**, 5 - **120** lvl+**retro**\n"
         base = no_retro_type_new['base']
@@ -421,19 +421,19 @@ class AzurLane(commands.Cog):
         #     base = retro_type['base']
         # if Submarine:
         #     base = submarine_type['base']
-        result_embed.add_field(name="Health", value=str(dicts_info[base][1][0]), inline=True)
-        result_embed.add_field(name="Firepower", value=str(dicts_info[base][1][1]), inline=True)
-        result_embed.add_field(name="Anti-air", value=str(dicts_info[base][1][2]), inline=True)
-        result_embed.add_field(name="Luck", value=str(dicts_info[base][1][3]), inline=True)
-        result_embed.add_field(name="Anti-sub", value=str(dicts_info[base][1][4]), inline=True)
-        result_embed.add_field(name="Armor", value=str(dicts_info[base][3][0]), inline=True)
-        result_embed.add_field(name="Torpedo", value=str(dicts_info[base][3][1]), inline=True)
-        result_embed.add_field(name="Aviation", value=str(dicts_info[base][3][2]), inline=True)
-        result_embed.add_field(name="Accuracy", value=str(dicts_info[base][3][3]), inline=True)
-        result_embed.add_field(name="Reload", value=str(dicts_info[base][5][0]), inline=True)
-        result_embed.add_field(name="Evasion", value=str(dicts_info[base][5][1]), inline=True)
-        result_embed.add_field(name="Cost", value=str(dicts_info[base][5][2]), inline=True)
-        result_embed.add_field(name="Speed", value=str(dicts_info[base][5][3]), inline=True)
+        result_embed.add_field(name="Health", value=str(dicts_info[1]['Unnamed: 1'][base]), inline=True)
+        result_embed.add_field(name="Firepower", value=str(dicts_info[1]['Unnamed: 2'][base]), inline=True)
+        result_embed.add_field(name="Anti-air", value=str(dicts_info[1]['Unnamed: 5'][base]), inline=True)
+        result_embed.add_field(name="Luck", value=str(dicts_info[1]['Unnamed: 11'][base]), inline=True)
+        result_embed.add_field(name="Anti-sub", value=str(dicts_info[1]['Unnamed: 12'][base]), inline=True)
+        result_embed.add_field(name="Armor", value=str(dicts_info[1]['Unnamed: 8'][base]), inline=True)
+        result_embed.add_field(name="Torpedo", value=str(dicts_info[1]['Unnamed: 3'][base]), inline=True)
+        result_embed.add_field(name="Aviation", value=str(dicts_info[1]['Unnamed: 4'][base]), inline=True)
+        result_embed.add_field(name="Accuracy", value=str(dicts_info[1]['Unnamed: 10'][base]), inline=True)
+        result_embed.add_field(name="Reload", value=str(dicts_info[1]['Unnamed: 6'][base]), inline=True)
+        result_embed.add_field(name="Evasion", value=str(dicts_info[1]['Unnamed: 7'][base]), inline=True)
+        result_embed.add_field(name="Cost", value=str(dicts_info[1]['Unnamed: 13'][base]), inline=True)
+        result_embed.add_field(name="Speed", value=str(dicts_info[1]['Unnamed: 9'][base]), inline=True)
         return result_embed
 
 

@@ -1,12 +1,10 @@
 import datetime
 import os
-import time
 
 import discord
 from discord.ext import commands
 
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
-time_start = time.time()
 
 
 def logtime(): return str(datetime.datetime.now().time()).partition('.')[0] + " "

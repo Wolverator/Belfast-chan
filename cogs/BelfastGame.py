@@ -280,7 +280,7 @@ class BelfastGame(commands.Cog):
         #         except Exception:
         #             pass
 
-        # self.world_file_path = dir_path + "world" + PICKLE
+        self.world_file_path = dir_path + "world" + PICKLE
         # if os.path.exists(self.world_file_path):
         # s = datetime.datetime.utcnow()
         # with open(file=self.world_file_path, mode="rb") as f:
@@ -288,20 +288,20 @@ class BelfastGame(commands.Cog):
         # f = datetime.datetime.utcnow()
         # print("loaded world " + str(f-s))
         # if not self.world:
-        # self.world = MapWorld()
-        # self.world.generate_world()
+        self.world = MapWorld()
+        self.world.generate_world()
 
-        ps = os.listdir(dir_path)
-        for p in ps:
-            if (not p.startswith("world")) and p.endswith(PICKLE) and int(p.replace(PICKLE, '')) not in self.players.keys():
-                self.load_player(str(p))
+        # ps = os.listdir(dir_path)
+        # for p in ps:
+        #     if (not p.startswith("world")) and p.endswith(PICKLE) and int(p.replace(PICKLE, '')) not in self.players.keys():
+        #         self.load_player(str(p))
 
     @commands.is_owner()
     @commands.command(pass_context=True, aliases=['ge'], hidden=True)
     async def give_exp(self, ctx, girl_id: int, exp: int):
         if 0 < int(girl_id) <= await self.get_profile(ctx.author.id).get_harem_length():
             if exp > 0:
-                await ctx.channel.trigger_typing()
+                await ctx.channel.typing()
                 girl = self.get_harem_girl_by_id(ctx.author.id, int(girl_id))
                 result = girl.add_exp(exp)
                 # save_harem_girl_by_id(ctx.author.id, girl)
@@ -370,37 +370,32 @@ class BelfastGame(commands.Cog):
     @commands.command(pass_context=True, brief="Duel another player at same server")
     # @commands.is_owner()
     async def duel(self, ctx, *, user_to_duel="placeholderLVL9999999"):
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         try:
             if ctx.message.mentions:
                 user_to_duel = ctx.message.mentions.pop(0).id
             author_id = ctx.author.id
-            if user_to_duel != "placeholderLVL9999999":
-                user = self.bot.get_user_from_guild(ctx.guild, str(user_to_duel))
-                if user is not None:
-                    if user.id is not author_id:
-                        if await self.get_profile(author_id):
-                            if await self.get_profile(author_id).get_harem_length() > 0:
-                                if await self.get_profile(user.id):
-                                    if await self.get_profile(user.id).get_harem_length() > 0:
-                                        result = await self.duel2players(ctx.guild, author_id, user.id)
-                                        await ctx.send(embed=result['embed'], delete_after=45)
-                                        await ctx.message.delete(delay=45)
-                                        # await ctx.send(file=discord.File(fp=result['filename'], filename="battle_log.log"), embed=result['embed'])
-                                    else:
-                                        await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nBut this Commander have no girls to battle with yet!")
-                                else:
-                                    await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nBut this Commander doesn't play this game yet (have no profile)!", delete_after=15)
-                            else:
-                                await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nBut you have no girls to battle with yet! Build some with ``Bel build``", delete_after=15)
-                        else:
-                            await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nBut you have no profile yet. Create one with ``Bel new``", delete_after=15)
-                    else:
-                        await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nBut you can't battle yourself. Please, use ``Bel battle`` command instead.", delete_after=15)
-                else:
-                    await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nCommander with predicate **" + user_to_duel + "** not found on this server.", delete_after=15)
-            else:
+            if user_to_duel == "placeholderLVL9999999":
                 await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nBut it seems like you forgot to choose a player you wanna duel.", delete_after=15)
+            else:
+                user = self.bot.get_user_from_guild(ctx.guild, str(user_to_duel))
+                if user is None:
+                    await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nCommander with predicate **" + user_to_duel + "** not found on this server.", delete_after=15)
+                elif user.id is author_id:
+                    await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nBut you can't battle yourself. Please, use ``Bel battle`` command instead.", delete_after=15)
+                elif not await self.get_profile(author_id):
+                    await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nBut you have no profile yet. Create one with ``Bel new``", delete_after=15)
+                elif not await self.get_profile(author_id).get_harem_length() > 0:
+                    await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nBut you have no girls to battle with yet! Build some with ``Bel build``", delete_after=15)
+                elif not await self.get_profile(user.id):
+                    await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nBut this Commander doesn't play this game yet (have no profile)!", delete_after=15)
+                elif not await self.get_profile(user.id).get_harem_length() > 0:
+                    await ctx.send("I am sorry, " + self.bot.user_title(author_id) + "!\nBut this Commander have no girls to battle with yet!")
+                else:
+                    result = await self.duel2players(ctx.guild, author_id, user.id)
+                    await ctx.send(embed=result['embed'], delete_after=45)
+                    await ctx.message.delete(delay=45)
+                    # await ctx.send(file=discord.File(fp=result['filename'], filename="battle_log.log"), embed=result['embed'])
         except Exception:
             raise
 
@@ -600,32 +595,28 @@ class BelfastGame(commands.Cog):
     @commands.command(pass_context=True, brief="Battle 2 girls in test mode")
     # @commands.is_owner()
     async def battle(self, ctx, girl1_id="placeholderLVL9999999", girl2_id="placeholderLVL9999999"):
-        await ctx.channel.trigger_typing()
-        if await self.get_profile(ctx.author.id):
-            if await self.get_profile(ctx.author.id).get_harem_length() > 0:
-                if girl1_id != "placeholderLVL9999999":
-                    if girl2_id != "placeholderLVL9999999":
-                        if girl1_id.isdigit() and girl2_id.isdigit():
-                            girl1 = self.get_harem_girl_by_id(ctx.author.id, int(girl1_id))
-                            if girl1 is not None:
-                                girl2 = self.get_harem_girl_by_id(ctx.author.id, int(girl2_id))
-                                if girl2 is not None:
-                                    result = await self.battle2girls(girl1, girl2)
-                                    await ctx.send(file=discord.File(fp=result['filename'], filename="battle_log.log"))
-                                else:
-                                    await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut seems like second girl's ID is wrong :thinking:")
-                            else:
-                                await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut seems like first girl's ID is wrong :thinking:")
-                        else:
-                            await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut you should choose girls via their IDs, using only numbers")
-                    else:
-                        await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut you forgot to select second girl")
-                else:
-                    await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut you forgot to select first girl")
-            else:
-                await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut you have no girls to battle with yet! Build some with ``Bel build``")
-        else:
+        await ctx.channel.typing()
+        if not await self.get_profile(ctx.author.id):
             await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut you have no profile yet. Create one with ``Bel new``")
+        elif not await self.get_profile(ctx.author.id).get_harem_length() > 0:
+            await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut you have no girls to battle with yet! Build some with ``Bel build``")
+        elif girl1_id == "placeholderLVL9999999":
+            await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut you forgot to select first girl")
+        elif girl2_id == "placeholderLVL9999999":
+            await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut you forgot to select second girl")
+        elif not girl1_id.isdigit() or not girl2_id.isdigit():
+            await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut you should choose girls via their IDs, using only numbers")
+        else:
+            girl1 = self.get_harem_girl_by_id(ctx.author.id, int(girl1_id))
+            if girl1 is None:
+                await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut seems like first girl's ID is wrong :thinking:")
+            else:
+                girl2 = self.get_harem_girl_by_id(ctx.author.id, int(girl2_id))
+                if girl2 is None:
+                    await ctx.send("I am sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut seems like second girl's ID is wrong :thinking:")
+                else:
+                    result = await self.battle2girls(girl1, girl2)
+                    await ctx.send(file=discord.File(fp=result['filename'], filename="battle_log.log"))
 
     async def battle2girls(self, girl1: BattleGirl, girl2: BattleGirl):
         battle_log = ""
@@ -870,7 +861,7 @@ class BelfastGame(commands.Cog):
 
     @commands.command(pass_context=True, aliases=['girl'], brief="Show girl's info from your harem")
     async def mygirl(self, ctx, *, girl_id=1):
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         if 0 < int(girl_id) <= (await self.get_profile(ctx.author.id)).get_harem_length():
             girl = self.players.get(ctx.author.id).get_girl(girl_id)
             if girl.rarity == 'Normal':
@@ -916,7 +907,7 @@ class BelfastGame(commands.Cog):
 
     @commands.command(pass_context=True, aliases=['p'], brief="Show Commander's profile")
     async def profile(self, ctx, *, target_user="placeholderLVL9999999"):
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         if target_user == "placeholderLVL9999999":
             if not await self.get_profile(ctx.author.id):
                 await ctx.send(":no_entry: Sorry, " + self.bot.user_title(ctx.author.id) + "!\nBut you have no profile yet. Create one with ``Bel new``")
@@ -947,7 +938,7 @@ class BelfastGame(commands.Cog):
 
     @commands.command(pass_context=True, aliases=['new', 'start', 'reset'], brief="Create new Commander")
     async def create(self, ctx):
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         if not await self.get_profile(ctx.author.id):
             await self.create_profile(ctx)
             await ctx.send("Successfully created new profile, Commander! :white_check_mark:\nUse ``Bel profile`` to check it.")
@@ -1014,7 +1005,7 @@ class BelfastGame(commands.Cog):
     async def globalreset(self, ctx):
         self.players = None
         self.players = {}
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         count = clear_folder(dir_path)
         self.world = MapWorld()
         self.world.generate_world()
@@ -1035,7 +1026,7 @@ class BelfastGame(commands.Cog):
     # @commands.is_owner()
     @commands.command(pass_context=True, brief="Show your owned girls list")
     async def harem(self, ctx, *, page_str="1"):
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         await ctx.send(embed=await self.simple_harem_paged_embed(ctx.message, "Your harem:", self.players.get(ctx.author.id).harem, page_str, discord.Colour.greyple(), False))
 
     async def simple_paged_embed(self, original_msg: discord.Message, title: str, list_to_page: list, page_str: str, color: discord.Colour, need_sort: bool):

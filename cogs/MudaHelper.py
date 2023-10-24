@@ -264,7 +264,7 @@ class MudaHelper(commands.Cog):
     @commands.guild_only()
     async def mgetmyadlist(self, ctx, *, page_str="1"):
         global users_antidisable_lists
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         result_list = []
         try:
             result_list = users_antidisable_lists[str(ctx.author.id)]
@@ -276,7 +276,7 @@ class MudaHelper(commands.Cog):
     @commands.guild_only()
     async def mgetadlist(self, ctx, page: int = 1, *, user_id_str="-1"):
         global users_antidisable_lists
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         if user_id_str == "-1":
             await ctx.send("Wrong argument - must be an ID number, " + self.bot.user_title(ctx.author.id) + "!", delete_after=15)
             await ctx.message.delete(delay=15)
@@ -295,7 +295,7 @@ class MudaHelper(commands.Cog):
     @commands.guild_only()
     async def mgetmyunclaimed(self, ctx, *, page_str="1"):
         global users_antidisable_lists, titles
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         result_list = []
         for user_id in users_antidisable_lists.keys():
             for title in users_antidisable_lists[user_id]:
@@ -307,7 +307,7 @@ class MudaHelper(commands.Cog):
     @commands.guild_only()
     async def mgetmyclaimed(self, ctx, *, page_str="1"):
         global users_antidisable_lists, titles
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         result_list = []
         for title in users_antidisable_lists[str(ctx.author.id)]:
             if title in titles.keys() and titles.get(title).unclaimed == 0:
@@ -318,7 +318,7 @@ class MudaHelper(commands.Cog):
     @commands.guild_only()
     async def mgetunclaimed(self, ctx, *, page_str="1"):
         global users_antidisable_lists, titles
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         result_list = []
         for title in titles.keys():
             if titles.get(title).unclaimed > 0:
@@ -329,7 +329,7 @@ class MudaHelper(commands.Cog):
     @commands.guild_only()
     async def mgetclaimed(self, ctx, *, page_str="1"):
         global users_antidisable_lists, titles
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         result_list = []
         for title in titles.keys():
             if titles.get(title).unclaimed == 0:
@@ -340,7 +340,7 @@ class MudaHelper(commands.Cog):
     @commands.guild_only()
     async def mmissingtitles(self, ctx, *, page_str="1"):
         global users_antidisable_lists, titles
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
 
         result_list = []
         for user_id in users_antidisable_lists.keys():
@@ -353,7 +353,7 @@ class MudaHelper(commands.Cog):
     @commands.guild_only()
     async def mgettitle(self, ctx, page: int = 1, *, title="\u200B"):
         global titles
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         mudaTitle = titles.get(title)
         if not mudaTitle:
             await ctx.send("No such title in my database!\nPlease, check the correct spelling - full title from Mudae, written in bold.")
@@ -370,7 +370,7 @@ class MudaHelper(commands.Cog):
     @commands.guild_only()
     async def mgetallunclaimed(self, ctx, *, page_str="1"):
         global titles
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         result_list = []  # bel mwhlac
         for title in titles.keys():
             for char in titles.get(title).unclaimed_list:
@@ -381,7 +381,7 @@ class MudaHelper(commands.Cog):
     @commands.guild_only()
     async def mgetallclaimed(self, ctx, *, page_str="1"):
         global titles
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
         result_list = []
         for title in titles.keys():
             for char in titles.get(title).claimed_list:

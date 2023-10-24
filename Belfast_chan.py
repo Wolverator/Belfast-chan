@@ -2,10 +2,10 @@ import asyncio
 import codecs
 import configparser
 import datetime
+import logging
 import os
 import time
 import traceback
-from threading import Thread
 
 import discord
 from colorama import init, Fore
@@ -56,6 +56,7 @@ class BelfastBot(commands.Bot):
         self.MyGuild = self.get_guild(566171342953512963)
         self.HangOut = self.get_guild(230774538579869708)
         self.silent_mode = False
+        self.botStartTime = time.time()
 
     def process_guilds(self):
         for guild in self.guilds:
@@ -164,13 +165,9 @@ class BelfastBot(commands.Bot):
                     await message.channel.send("Reloaded successfully, Master!", delete_after=15)
                     await message.delete(delay=15)
                     return
-                if message.channel.id == 416694163179044874 and str(message.clean_content).startswith("$$w"):
+                if message.channel.id == 416694163179044874 and str(message.clean_content).startswith("bel "):
                     await message.delete()
-                    await message.channel.send("🚫 WRONG CHANNEL! 🚫 <@!560867880632320020> 🚫", delete_after=10)
-                    await asyncio.sleep(1)
-                    await message.channel.send("🚫 WRONG CHANNEL! 🚫 <@!560867880632320020> 🚫", delete_after=10)
-                    await asyncio.sleep(1)
-                    await message.channel.send("🚫 WRONG CHANNEL! 🚫 <@!560867880632320020> 🚫", delete_after=10)
+                    await message.channel.send("🚫 That's Rioghán's channel! 🚫 <@!560867880632320020> 🚫", delete_after=20)
             # process users' messages
             guild = ""
             author = ""
@@ -192,8 +189,7 @@ class BelfastBot(commands.Bot):
                     else:
                         await message.channel.send("How can i help you, Commander?\nFor the available commands list, please write `Bel help`.", delete_after=25)
                         await message.delete(delay=25)
-                thread = Thread(await self.process_commands(message), daemon=True)
-                thread.run()
+                await self.process_commands(message)
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
@@ -276,7 +272,7 @@ class BelfastBot(commands.Bot):
 
     @commands.Cog.listener()
     async def on_resume(self):
-        print(logtime() + Fore.GREEN + "Connected restored successfully!")
+        print(logtime() + Fore.GREEN + "Connection restored successfully!")
         if not self.silent_mode:
             await self.change_presence(status=discord.Status.online, activity=discord.Game("Azur Lane"))
 
@@ -298,8 +294,13 @@ class BelfastBot(commands.Bot):
             return
         elif isinstance(error, discord.ext.commands.errors.NotOwner):
             await ctx.send("I am sorry, Commander! :no_entry:\nBut only my Master can give me this order.", delete_after=15)
+            await ctx.message.delete(delay=5)
         elif isinstance(error, discord.ext.commands.errors.NSFWChannelRequired):
             await ctx.send("I am sorry, Commander! :no_entry:\nBut I can not do this outside NSFW channels.", delete_after=15)
+            await ctx.message.delete(delay=5)
+        elif isinstance(error, discord.ext.commands.errors.CommandOnCooldown):
+            await ctx.send(f"I am sorry, Commander! :no_entry:\nBut this command still unavailable.\nYou can use it after {round(error.retry_after, 2)}s", delete_after=15)
+            await ctx.message.delete(delay=5)
         else:
             error_log = "========================\n" \
                         "Error type: " + str(type(error)) + \
@@ -356,4 +357,4 @@ if __name__ == '__main__':
     create_if_not_exists("/error_logs")
 
     bot = BelfastBot()
-    bot.run(config['Main']['token'], reconnect=True)
+    bot.run(config['Main']['token'], reconnect=True, log_level=logging.ERROR)

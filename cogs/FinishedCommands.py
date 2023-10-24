@@ -16,7 +16,6 @@ from cogs.BelfastUtils import logtime
 
 DateParser = parser()
 dir_path = os.path.dirname(os.path.realpath(__file__)).replace("cogs", "")
-time_start = time.time()
 
 
 class General(commands.Cog):
@@ -48,7 +47,7 @@ class General(commands.Cog):
     @commands.command(pass_context=True, brief="Check statistics")
     async def stats(self, ctx):
         await ctx.channel.typing()
-        text = "Bot online for: **" + str(datetime.timedelta(seconds=time.time() - time_start)).partition('.')[0] + "**\n"
+        text = "Bot online for: **" + str(datetime.timedelta(seconds=time.time() - self.bot.botStartTime)).partition('.')[0] + "**\n"
         users = 0
         bots = 0
 
@@ -99,13 +98,6 @@ class General(commands.Cog):
                 size += s
         return count, code_lines, size
 
-    @commands.command(pass_context=True, brief="Check online time")
-    async def online(self, ctx):
-        await ctx.channel.typing()
-        await ctx.send("I'm online for " + str(datetime.timedelta(seconds=time.time() - time_start)).partition('.')[0]
-                       + " already, doing good.\nThanks for asking and may The Force be with you!", delete_after=15)
-        await ctx.message.delete(delay=15)
-
     @commands.command(pass_context=True, brief="Leave your suggestion")
     async def suggest(self, ctx, *, text: str):
         path_to_file = os.path.abspath("suggests/suggest by " + str(ctx.author) + " " + str(time.time()).replace('.', '_') + ".txt")
@@ -140,7 +132,7 @@ class General(commands.Cog):
 
     @commands.command(pass_context=True, brief="Grisaia1 translation status")
     async def ts(self, ctx):
-        await ctx.channel.typing()
+        await ctx.message.add_reaction('🕑')
         path = "D:\\Misc\\VNs\\Grisaia 1 debug\\translate here\\clean texts"
         WRITE_TRANSLATION_HERE = "(write translation here)"
         com_total = 0
@@ -202,10 +194,16 @@ class General(commands.Cog):
         result += "\n\nИтого: {0}/{1} строк, **{2}%**".format(sum_trans, sum_total, round((sum_trans / sum_total) * 100, 2))
 
         result += "\n{0}".format(str(datetime.datetime.now()).split('.')[0])
-        await ctx.send(result)
-        await ctx.message.delete(delay=5)
+        if ctx.channel.id == 1008380737294172253:
+            message = await ctx.channel.fetch_message(1140059082242392155)
+            await message.edit(content=result)
+        else:
+            await ctx.send(result)
+        await ctx.message.remove_reaction('🕑', self.bot.user)
+        await ctx.message.add_reaction('✅')
+        await ctx.message.delete(delay=15)
 
-    @commands.command(pass_context=True, brief="Add translated file for Grisaia1")
+    @commands.command(pass_context=True, hidden=True, brief="Add translated file for Grisaia1")
     async def tladd(self, ctx):
         correctTableNames = 0
         for file in ctx.message.attachments:

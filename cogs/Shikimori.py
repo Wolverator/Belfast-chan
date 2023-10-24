@@ -142,6 +142,12 @@ class Shikimori(commands.Cog):
         await ctx.message.add_reaction('✅')
         await ctx.message.delete(delay=15)
 
+    @commands.command(pass_context=True)
+    @commands.is_owner()
+    async def shikiTest(self, ctx, animeID=20):
+        response = json.loads(requests.request("GET", "https://shikimori.one/api/animes/" + str(animeID), data="", headers={"User-Agent": "Waifutsianism"}).text)
+        await ctx.send(response.get('name'))
+
     def getAnime(self, animeID: int):
         global shikimoriAnimes
         response = json.loads(requests.request("GET", "https://shikimori.one/api/animes/" + str(animeID), data="", headers={"User-Agent": "Waifutsianism"}).text)
