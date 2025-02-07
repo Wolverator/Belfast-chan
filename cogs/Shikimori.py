@@ -67,11 +67,11 @@ class Shikimori(commands.Cog):
         except KeyError:
             await ctx.send("No user with that nickname. Check spelling?")
             return
-        await asyncio.sleep(1)  # to prevernt spamming queries
+        await asyncio.sleep(1)  # to prevent spamming queries
         # getting 'completed' anime list for user ID
         response = json.loads(requests.request("GET", "https://shikimori.one/api/v2/user_rates", data="", headers={"User-Agent": "Waifutsianism"},
                                                params={"user_id": id_as_str, "target_type": "Anime", "status": "completed"}).text)
-        await asyncio.sleep(1)  # to prevernt spamming queries
+        await asyncio.sleep(1)  # to prevent spamming queries
         # checking for missing anime in list of known anime
         for anime in response:
             animeID = int(anime.get('target_id'))

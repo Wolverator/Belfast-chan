@@ -11,6 +11,7 @@ import pandas
 from colorama import Fore
 from dateutil.parser import parser
 from discord.ext import commands
+from pandas import DataFrame, ExcelWriter
 
 from cogs.BelfastUtils import logtime
 
@@ -148,9 +149,60 @@ class General(commands.Cog):
         yum_total = 0
         yum_trans = 0
 
+        com_filename = []
+        com_total_lines = []
+        com_translated_lines = []
+        com_percent = []
+        com_redacted_lines = []
+        com_redacted_percent = []
+        com_redacted_finished = []
+
+        ama_filename = []
+        ama_total_lines = []
+        ama_translated_lines = []
+        ama_percent = []
+        ama_redacted_lines = []
+        ama_redacted_percent = []
+        ama_redacted_finished = []
+
+        mak_filename = []
+        mak_total_lines = []
+        mak_translated_lines = []
+        mak_percent = []
+        mak_redacted_lines = []
+        mak_redacted_percent = []
+        mak_redacted_finished = []
+
+        mic_filename = []
+        mic_total_lines = []
+        mic_translated_lines = []
+        mic_percent = []
+        mic_redacted_lines = []
+        mic_redacted_percent = []
+        mic_redacted_finished = []
+
+        sac_filename = []
+        sac_total_lines = []
+        sac_translated_lines = []
+        sac_percent = []
+        sac_redacted_lines = []
+        sac_redacted_percent = []
+        sac_redacted_finished = []
+
+        yum_filename = []
+        yum_total_lines = []
+        yum_translated_lines = []
+        yum_percent = []
+        yum_redacted_lines = []
+        yum_redacted_percent = []
+        yum_redacted_finished = []
+
         for f in os.listdir(path):
             file_path = os.path.join(path, f)
             if os.path.isfile(file_path) and file_path.endswith(".xlsx") and "~" not in f:
+                current_filename = f.replace('.xlsx', '')
+                current_total = 0
+                current_translated = 0
                 xls = pandas.ExcelFile(file_path)
                 df = xls.parse(0)
                 text_lines = list(df[df.columns[2]]).copy()
@@ -158,8 +210,13 @@ class General(commands.Cog):
                 while len(text_lines) > 0:
                     text_lines.pop(0)
                     translated = 0
-                    if not text_lines.pop(0) == WRITE_TRANSLATION_HERE:
+                    current_line = text_lines.pop(0)
+                    if not str(current_line) in (WRITE_TRANSLATION_HERE, "None", 'nan'):
                         translated = 1
+
+                    current_total += 1
+                    current_translated += translated
+
                     match f[:2]:
                         case "op" | "co":
                             com_total += 1
@@ -181,6 +238,108 @@ class General(commands.Cog):
                             yum_trans += translated
                         case _:
                             pass
+                match f[:2]:
+                    case "op" | "co":
+                        com_filename.append(current_filename)
+                        com_total_lines.append(current_total)
+                        com_translated_lines.append(current_translated)
+                        com_percent.append(0)
+                        com_redacted_lines.append(0)
+                        com_redacted_percent.append(0)
+                        com_redacted_finished.append(0)
+                    case "am":
+                        ama_filename.append(current_filename)
+                        ama_total_lines.append(current_total)
+                        ama_translated_lines.append(current_translated)
+                        ama_percent.append(0)
+                        ama_redacted_lines.append(0)
+                        ama_redacted_percent.append(0)
+                        ama_redacted_finished.append(0)
+                    case "ma":
+                        mak_filename.append(current_filename)
+                        mak_total_lines.append(current_total)
+                        mak_translated_lines.append(current_translated)
+                        mak_percent.append(0)
+                        mak_redacted_lines.append(0)
+                        mak_redacted_percent.append(0)
+                        mak_redacted_finished.append(0)
+                    case "mi":
+                        mic_filename.append(current_filename)
+                        mic_total_lines.append(current_total)
+                        mic_translated_lines.append(current_translated)
+                        mic_percent.append(0)
+                        mic_redacted_lines.append(0)
+                        mic_redacted_percent.append(0)
+                        mic_redacted_finished.append(0)
+                    case "sa":
+                        sac_filename.append(current_filename)
+                        sac_total_lines.append(current_total)
+                        sac_translated_lines.append(current_translated)
+                        sac_percent.append(0)
+                        sac_redacted_lines.append(0)
+                        sac_redacted_percent.append(0)
+                        sac_redacted_finished.append(0)
+                    case "yu":
+                        yum_filename.append(current_filename)
+                        yum_total_lines.append(current_total)
+                        yum_translated_lines.append(current_translated)
+                        yum_percent.append(0)
+                        yum_redacted_lines.append(0)
+                        yum_redacted_percent.append(0)
+                        yum_redacted_finished.append(0)
+                    case _:
+                        pass
+
+        writer = ExcelWriter("D:\\Misc\\VNs\\Grisaia 1 debug\\translate here\\total_table.xlsx", engine='xlsxwriter')
+        df_com = DataFrame({"Таблицы": com_filename,
+                            "Всего строк": com_total_lines,
+                            "Переведено": com_translated_lines,
+                            "Процент перевода": com_percent,
+                            "Подверглось редактуре": com_redacted_lines,
+                            "Подверглось редактуре(%)": com_redacted_percent,
+                            "Редактура": com_redacted_finished})
+        df_com.to_excel(writer, sheet_name='Общий', index=False, na_rep='NaN')
+        df_com = DataFrame({"Таблицы": ama_filename,
+                            "Всего строк": ama_total_lines,
+                            "Переведено": ama_translated_lines,
+                            "Процент перевода": ama_percent,
+                            "Подверглось редактуре": ama_redacted_lines,
+                            "Подверглось редактуре(%)": ama_redacted_percent,
+                            "Редактура": ama_redacted_finished})
+        df_com.to_excel(writer, sheet_name='Амане', index=False, na_rep='NaN')
+        df_com = DataFrame({"Таблицы": mak_filename,
+                            "Всего строк": mak_total_lines,
+                            "Переведено": mak_translated_lines,
+                            "Процент перевода": mak_percent,
+                            "Подверглось редактуре": mak_redacted_lines,
+                            "Подверглось редактуре(%)": mak_redacted_percent,
+                            "Редактура": mak_redacted_finished})
+        df_com.to_excel(writer, sheet_name='Макина', index=False, na_rep='NaN')
+        df_com = DataFrame({"Таблицы": mic_filename,
+                            "Всего строк": mic_total_lines,
+                            "Переведено": mic_translated_lines,
+                            "Процент перевода": mic_percent,
+                            "Подверглось редактуре": mic_redacted_lines,
+                            "Подверглось редактуре(%)": mic_redacted_percent,
+                            "Редактура": mic_redacted_finished})
+        df_com.to_excel(writer, sheet_name='Мичиру', index=False, na_rep='NaN')
+        df_com = DataFrame({"Таблицы": sac_filename,
+                            "Всего строк": sac_total_lines,
+                            "Переведено": sac_translated_lines,
+                            "Процент перевода": sac_percent,
+                            "Подверглось редактуре": sac_redacted_lines,
+                            "Подверглось редактуре(%)": sac_redacted_percent,
+                            "Редактура": sac_redacted_finished})
+        df_com.to_excel(writer, sheet_name='Сачи', index=False, na_rep='NaN')
+        df_com = DataFrame({"Таблицы": yum_filename,
+                            "Всего строк": yum_total_lines,
+                            "Переведено": yum_translated_lines,
+                            "Процент перевода": yum_percent,
+                            "Подверглось редактуре": yum_redacted_lines,
+                            "Подверглось редактуре(%)": yum_redacted_percent,
+                            "Редактура": yum_redacted_finished})
+        df_com.to_excel(writer, sheet_name='Юмико', index=False, na_rep='NaN')
+        writer.close()
 
         result = "**Прогресс перевода Grisaia no Kajitsu:**" \
                  + "\nОбщий: {0}/{1} строк, **{2}%**".format(com_trans, com_total, round((com_trans / com_total) * 100, 2))
@@ -193,12 +352,15 @@ class General(commands.Cog):
         sum_total = ama_total + com_total + mak_total + mic_total + sac_total + yum_total
         result += "\n\nИтого: {0}/{1} строк, **{2}%**".format(sum_trans, sum_total, round((sum_trans / sum_total) * 100, 2))
 
-        result += "\n{0}".format(str(datetime.datetime.now()).split('.')[0])
+        result += "\nОбновлено: <t:{0}:f> (<t:{0}:R>)".format(
+            # str(datetime.datetime.now()).split('.')[0],
+            str(time.time()).split('.')[0])
         if ctx.channel.id == 1008380737294172253:
-            message = await ctx.channel.fetch_message(1140059082242392155)
+            message = await ctx.channel.fetch_message(1291474774832320522)
             await message.edit(content=result)
         else:
             await ctx.send(result)
+        # await ctx.send(result)
         await ctx.message.remove_reaction('🕑', self.bot.user)
         await ctx.message.add_reaction('✅')
         await ctx.message.delete(delay=15)

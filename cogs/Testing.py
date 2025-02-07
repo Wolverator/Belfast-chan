@@ -2,6 +2,7 @@ import datetime
 import os
 import re
 import string
+import time
 import urllib.request
 
 import pandas
@@ -42,6 +43,28 @@ class Testing(commands.Cog):
     async def dm(self, ctx, *, _text: str):
         user = await self.bot.fetch_user(_text.partition(' ')[0])
         await user.send(_text.partition(' ')[2])
+
+    @commands.command(pass_context=True, hidden=True)
+    @commands.is_owner()
+    async def ms(self, ctx):
+        models_path = "G:/AI Art Generator/stable-diffusion-webui/models/Stable-diffusion"
+        pics_path_base = "D:/Misc/AI Generated Art/"
+        pics_paths = [
+            "2023-11-10",
+            "2023-11-20"
+        ]
+        models = {}
+        for model in os.listdir(models_path):
+            if not model.endswith(".txt"):
+                models[model.replace(".safetensors", "")] = 0
+
+        for folder in pics_paths:
+            for pic in os.listdir(pics_path_base + folder):
+                for model in models.keys():
+                    if model in pic:
+                        models[model] = models.get(model) + 1
+        sorted_scores = sorted(models.items(), key=lambda item: item[1], reverse=True)
+        await ctx.send("```" + str(sorted_scores).replace('), ', '\n').replace('(', '')[1:-2] + "```")
 
     @commands.command(pass_context=True, hidden=True)
     @commands.is_owner()
@@ -145,7 +168,9 @@ class Testing(commands.Cog):
         sum_total = ama_total + com_total + mak_total + mic_total + sac_total + yum_total
         result += "\n\nTotal: {0}/{1} lines, **{2}%**".format(sum_trans, sum_total, round((sum_trans / sum_total) * 100, 2))
 
-        result += "\n{0}".format(str(datetime.datetime.now()).split('.')[0])
+        result += "\nUpdated: {0} (<t:{1}:R>)".format(
+            str(datetime.datetime.now()).split('.')[0],
+            str(time.time()).split('.')[0])
         await ctx.send(result)
         await ctx.message.delete(delay=5)
 
